@@ -1,7 +1,7 @@
 ARTIST CV BUILDER
 Created by Jerome Foundation
 https://www.jeromefdn.org
-
+Hosted at: https://jeromefdn.github.io/artist-cv-builder/index.html
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ABOUT THIS TOOL

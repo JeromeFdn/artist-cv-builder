@@ -183,12 +183,70 @@ body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; backg
 .cv-collab { color: #000; font-size: 0.875rem; font-style: italic; }
 .cv-empty { font-size: 0.875rem; color: #767676; font-style: italic; }
 
+/* ── Print tip modal ─────────────────────────────────────────── */
+.print-tip-overlay {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,.6);
+  align-items: center; justify-content: center;
+}
+.print-tip-overlay.visible { display: flex; }
+.print-tip-box {
+  background: #fff; padding: 1.75rem 2rem; max-width: 28rem; width: 90%;
+  border-top: 3px solid #111;
+}
+.print-tip-box h2 {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: #111; margin-bottom: 1rem;
+}
+.print-tip-box ol {
+  font-size: 0.9375rem; line-height: 1.7; color: #111; padding-left: 1.25rem; margin-bottom: 1.25rem;
+}
+.print-tip-box li { margin-bottom: 0.375rem; }
+.print-tip-box li strong { font-weight: 600; }
+.print-tip-note {
+  font-size: 0.8125rem; color: #555; font-style: italic; margin-bottom: 1.25rem; line-height: 1.5;
+}
+.print-tip-actions { display: flex; gap: 0.75rem; }
+.print-tip-go {
+  background: #111; color: #fff; border: none; padding: 0.5rem 1.25rem;
+  font-family: 'Barlow', sans-serif; font-size: 0.9375rem; font-weight: 600;
+  cursor: pointer; transition: background .15s; flex: 1;
+}
+.print-tip-go:hover { background: #333; }
+.print-tip-go:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
+.print-tip-cancel {
+  background: none; color: #555; border: 1px solid #ccc; padding: 0.5rem 1.25rem;
+  font-family: 'Barlow', sans-serif; font-size: 0.9375rem; cursor: pointer; transition: all .15s;
+}
+.print-tip-cancel:hover { border-color: #111; color: #111; }
+.print-tip-cancel:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.site-footer {
+  background: #111; color: #999; flex-shrink: 0;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.75rem; line-height: 1.6;
+  display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+}
+.site-footer a { color: #ccc; text-decoration: underline; }
+.site-footer a:hover { color: #fff; }
+.site-footer a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.footer-divider { color: #444; }
+
 /* ── Print ───────────────────────────────────────────────────── */
 @media print {
-  @page { margin: 0.75in; }
+  @page {
+    margin: 0.75in 0.75in 1in 0.75in;
+    @bottom-right {
+      content: "Page " counter(page);
+      font-family: 'Barlow', sans-serif;
+      font-size: 9pt;
+      color: #000;
+    }
+  }
   html, body { height: auto; overflow: visible; }
   #app { height: auto; }
-  .skip-link, .toolbar, .form-panel { display: none !important; }
+  .skip-link, .toolbar, .form-panel, .site-footer, .print-tip-overlay { display: none !important; }
   .main { display: block !important; }
   .preview-panel { background: none !important; padding: 0 !important; overflow: visible !important; }
   .cv-doc { box-shadow: none !important; max-width: 100% !important; padding: 0 !important; min-height: 0 !important; }
@@ -209,7 +267,7 @@ body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; backg
     <div class="toolbar-actions">
       <span id="save-badge" class="save-badge" aria-live="polite" aria-atomic="true">&#x2713; Saved</span>
       <button class="clear-btn" id="clear-btn" type="button">Clear Form</button>
-      <button class="print-btn" type="button" onclick="window.print()">Print / Save PDF</button>
+      <button class="print-btn" type="button" id="print-btn">Print / Save PDF</button>
     </div>
   </div>
 
@@ -229,6 +287,28 @@ body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; backg
         aria-label="CV preview document"
         role="region"
       ></div>
+    </div>
+  </div>
+
+  <footer class="site-footer" role="contentinfo">
+    <span>Created by <a href="https://www.jeromefdn.org" target="_blank" rel="noopener noreferrer">Jerome Foundation</a> &middot; Last updated March 23, 2026 &nbsp;|&nbsp; A note about the privacy of this tool: Everything you enter stays on your device. This tool does not collect, store, or transmit your data &mdash; your CV information is saved only in your browser and is never shared with Jerome Foundation or anyone else.</span>
+  </footer>
+
+  <!-- Print tip modal -->
+  <div class="print-tip-overlay" id="print-tip-overlay" role="dialog" aria-modal="true" aria-labelledby="print-tip-heading">
+    <div class="print-tip-box">
+      <h2 id="print-tip-heading">Before you print</h2>
+      <ol>
+        <li>In the print dialog, look for <strong>Headers and footers</strong> (Chrome / Edge) or <strong>Print headers and footers</strong> (Firefox / Safari) and <strong>uncheck it</strong>. This removes the browser's URL and date lines from your output.</li>
+        <li>Uncheck <strong>Print background graphics</strong> (Chrome / Edge) or <strong>Print backgrounds</strong> (Firefox / Safari) to keep the output clean and save ink.</li>
+        <li>Set <strong>Margins</strong> to Default or Normal.</li>
+        <li>Choose <strong>Save as PDF</strong> as the destination if you want a PDF file.</li>
+      </ol>
+      <p class="print-tip-note">Page numbers will be added automatically to the bottom-right of each page.</p>
+      <div class="print-tip-actions">
+        <button class="print-tip-go" id="print-tip-go" type="button">Open Print Dialog</button>
+        <button class="print-tip-cancel" id="print-tip-cancel" type="button">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -800,6 +880,40 @@ document.getElementById('clear-btn').addEventListener('click', () => {
   const badge = document.getElementById('save-badge');
   badge.textContent = 'Cleared';
   badge.classList.remove('saved');
+});
+
+// ── Print modal ───────────────────────────────────────────────────
+const overlay    = document.getElementById('print-tip-overlay');
+const printGoBtn = document.getElementById('print-tip-go');
+const cancelBtn  = document.getElementById('print-tip-cancel');
+
+document.getElementById('print-btn').addEventListener('click', () => {
+  overlay.classList.add('visible');
+  printGoBtn.focus();
+});
+
+printGoBtn.addEventListener('click', () => {
+  overlay.classList.remove('visible');
+  window.print();
+});
+
+cancelBtn.addEventListener('click', () => {
+  overlay.classList.remove('visible');
+  document.getElementById('print-btn').focus();
+});
+
+overlay.addEventListener('click', e => {
+  if (e.target === overlay) {
+    overlay.classList.remove('visible');
+    document.getElementById('print-btn').focus();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && overlay.classList.contains('visible')) {
+    overlay.classList.remove('visible');
+    document.getElementById('print-btn').focus();
+  }
 });
 
 // ── Init ──────────────────────────────────────────────────────────

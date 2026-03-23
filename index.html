@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artist CV Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/*
+  WCAG 2.0 AA compliant:
+  - All inputs have explicit <label for="id"> (1.3.1 / 4.1.2)
+  - All text ≥ 4.5:1 contrast; large/bold text ≥ 3:1 (1.4.3)
+  - Font sizes in rem (1.4.4)
+  - Visible focus indicators on all interactive elements (2.4.7)
+  - aria-live on CV preview (4.1.3)
+  - Focus managed after add/remove (2.4.3)
+  - Skip link present (2.4.1)
+  - Semantic heading hierarchy (1.3.1)
+  - aria-current on active nav item (4.1.2)
+  - Toggle uses real checkbox with label (4.1.2)
+*/
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; background: #e9e8e2; color: #111; }
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+.skip-link {
+  position: absolute; top: -999px; left: 0; z-index: 1000;
+  background: #fff; color: #111; padding: 0.5rem 1rem; font-size: 0.875rem;
+  border: 2px solid #111; text-decoration: none; font-weight: 600;
+}
+.skip-link:focus { top: 0; }
+
+/* ── Toolbar ─────────────────────────────────────────────────── */
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 1.25rem; height: 3.125rem;
+  background: #111; color: #fff; flex-shrink: 0;
+}
+.t-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 0.9375rem; letter-spacing: .14em; text-transform: uppercase;
+}
+.t-sub { font-size: 0.8125rem; color: #999; margin-left: 0.75rem; }
+.toolbar-actions { display: flex; gap: 0.5rem; align-items: center; }
+.print-btn {
+  background: #fff; color: #111; border: none; padding: 0.4375rem 1rem;
+  font-family: 'Barlow', sans-serif; font-size: 0.875rem; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: background .15s;
+}
+.print-btn:hover { background: #e0e0e0; }
+.print-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.clear-btn {
+  background: transparent; color: #bbb; border: 1px solid #555; padding: 0.375rem 0.875rem;
+  font-family: 'Barlow', sans-serif; font-size: 0.875rem; font-weight: 500;
+  letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .15s;
+}
+.clear-btn:hover { color: #fff; border-color: #999; }
+.clear-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.save-badge { font-size: 0.75rem; color: #999; letter-spacing: .04em; transition: color .3s; }
+.save-badge.saved { color: #5a9; }
+
+/* ── Main layout ─────────────────────────────────────────────── */
+.main { display: flex; flex: 1; overflow: hidden; }
+.form-panel { width: 42%; display: flex; flex-shrink: 0; border-right: 1px solid #d0cfca; overflow: hidden; }
+
+/* ── Section nav ─────────────────────────────────────────────── */
+.section-nav { width: 10.5rem; background: #1c1c1c; padding: 0.75rem 0; overflow-y: auto; flex-shrink: 0; }
+.nav-section-group { margin-bottom: 0.25rem; }
+.nav-group-label {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.8125rem; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: #555;
+  padding: 0.5rem 0.875rem 0.25rem; display: block;
+}
+.nav-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; text-align: left; background: none;
+  border: none; border-left: 0.125rem solid transparent;
+  color: #aaa; padding: 0.5rem 0.875rem;
+  font-family: 'Barlow', sans-serif; font-size: 0.875rem; font-weight: 400;
+  cursor: pointer; letter-spacing: .02em; transition: color .15s, background .15s;
+}
+.nav-btn:hover { color: #eee; background: rgba(255,255,255,.06); }
+.nav-btn:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
+.nav-btn.active { color: #fff; background: rgba(255,255,255,.1); font-weight: 600; border-left-color: #fff; }
+/* Nav dot: filled = section included in CV, empty = excluded */
+.nav-dot {
+  width: 0.375rem; height: 0.375rem; border-radius: 50%; flex-shrink: 0; margin-left: 0.375rem;
+  background: #444; border: 1px solid #555; transition: background .2s;
+}
+.nav-dot.on { background: #5a9; border-color: #5a9; }
+
+/* ── Form content ────────────────────────────────────────────── */
+.form-content { flex: 1; background: #fff; padding: 1.375rem 1.125rem; overflow-y: auto; }
+.f-title {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.875rem; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: #111;
+  margin-bottom: 0.75rem; padding-bottom: 0.4375rem; border-bottom: 0.125rem solid #111;
+}
+.f-tip { font-size: 0.875rem; color: #767676; margin-bottom: 1rem; line-height: 1.5; font-style: italic; }
+
+/* ── Section toggle ──────────────────────────────────────────── */
+.section-toggle-row {
+  display: flex; align-items: center; gap: 0.625rem;
+  margin-bottom: 1rem; padding: 0.625rem 0.75rem;
+  background: #f7f7f7; border: 1px solid #e0e0e0;
+}
+.toggle-cb { width: 1rem; height: 1rem; cursor: pointer; accent-color: #111; }
+.toggle-label-text { font-size: 0.875rem; font-weight: 500; color: #333; cursor: pointer; user-select: none; }
+.toggle-label-text.off { color: #767676; }
+.toggle-hint { font-size: 0.75rem; color: #767676; margin-left: auto; font-style: italic; }
+
+/* ── Field styles ────────────────────────────────────────────── */
+.field-row { display: flex; gap: 0.625rem; margin-bottom: 0.6875rem; }
+.field-wrap { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.field-label { font-size: 0.8125rem; font-weight: 600; color: #666; margin-bottom: 0.1875rem; letter-spacing: .05em; text-transform: uppercase; }
+.field-input {
+  width: 100%; border: 1px solid #767676; padding: 0.5rem 0.625rem;
+  font-family: 'Barlow', sans-serif; font-size: 1rem; color: #111;
+  background: #fff; outline: none; transition: border-color .15s;
+}
+.field-input:hover { border-color: #444; }
+.field-input:focus { border-color: #111; box-shadow: 0 0 0 3px rgba(0,0,0,.15); }
+.field-input::placeholder { color: #767676; }
+.field-help { font-size: 0.8125rem; color: #767676; margin-top: 0.25rem; line-height: 1.4; font-style: italic; }
+.field-textarea {
+  width: 100%; border: 1px solid #767676; padding: 0.5rem 0.625rem;
+  font-family: 'Barlow', sans-serif; font-size: 1rem; color: #111;
+  background: #fff; outline: none; transition: border-color .15s;
+  resize: vertical; min-height: 8rem; line-height: 1.6;
+}
+.field-textarea:hover { border-color: #444; }
+.field-textarea:focus { border-color: #111; box-shadow: 0 0 0 3px rgba(0,0,0,.15); }
+.field-textarea::placeholder { color: #767676; }
+
+/* ── Entry cards ─────────────────────────────────────────────── */
+.entry-card { border: 1px solid #d0d0d0; padding: 0.75rem; margin-bottom: 0.625rem; background: #f7f7f7; }
+.entry-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.625rem; }
+.entry-num { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8125rem; font-weight: 700; color: #767676; letter-spacing: .1em; text-transform: uppercase; }
+.rm-btn {
+  background: none; border: 1px solid #767676; color: #444;
+  padding: 0.125rem 0.5rem; font-size: 0.875rem; cursor: pointer;
+  font-family: 'Barlow', sans-serif; transition: all .15s;
+}
+.rm-btn:hover { border-color: #111; color: #111; background: #f0f0f0; }
+.rm-btn:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
+/* Co-creator row gets a subtle tint */
+.cocreator-row .field-input { background: #fafff8; }
+.add-btn {
+  width: 100%; background: #111; border: none; color: #fff; padding: 0.5625rem;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.9375rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; cursor: pointer; margin-top: 0.125rem; transition: background .15s;
+}
+.add-btn:hover { background: #333; }
+.add-btn:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
+
+/* ── Preview panel ───────────────────────────────────────────── */
+.preview-panel { flex: 1; background: #dddcd6; overflow-y: auto; padding: 1.75rem 1.25rem; }
+.cv-doc {
+  background: #fff; max-width: 41.25rem; margin: 0 auto;
+  padding: 3.25rem 3rem 4rem; min-height: 56.25rem;
+  box-shadow: 0 0.1875rem 1.75rem rgba(0,0,0,.15);
+}
+
+/* ── CV typography ───────────────────────────────────────────── */
+.cv-name { font-family: 'DM Serif Display', serif; font-size: 2.5rem; color: #000; letter-spacing: -.01em; line-height: 1; margin-bottom: 0.5rem; }
+.cv-name.empty { color: #767676; }
+.cv-meta { font-size: 0.9375rem; color: #000; margin-bottom: 1.75rem; line-height: 1.7; }
+.cv-meta .sep { color: #000; margin: 0 0.4375rem; }
+.cv-rule { border: none; border-top: 0.125rem solid #000; margin-bottom: 1.375rem; }
+.cv-section { margin-bottom: 1.5rem; }
+.cv-sec-title {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.8125rem; font-weight: 700;
+  letter-spacing: .2em; text-transform: uppercase; color: #000;
+  margin-bottom: 0.5625rem; padding-bottom: 0.3125rem; border-bottom: 1px solid #000;
+}
+.cv-entry { display: grid; grid-template-columns: 3.5rem 1fr; gap: 0 0.75rem; margin-bottom: 0.4375rem; font-size: 0.9375rem; line-height: 1.55; }
+.cv-yr { color: #000; font-size: 0.875rem; font-weight: 500; padding-top: 0.0625rem; text-align: right; white-space: nowrap; }
+.cv-main { font-weight: 500; color: #000; }
+.cv-sub { color: #000; font-size: 0.875rem; }
+.cv-collab { color: #000; font-size: 0.875rem; font-style: italic; }
+.cv-empty { font-size: 0.875rem; color: #767676; font-style: italic; }
+
+/* ── Print ───────────────────────────────────────────────────── */
+@media print {
+  @page { margin: 0.75in; }
+  html, body { height: auto; overflow: visible; }
+  #app { height: auto; }
+  .skip-link, .toolbar, .form-panel { display: none !important; }
+  .main { display: block !important; }
+  .preview-panel { background: none !important; padding: 0 !important; overflow: visible !important; }
+  .cv-doc { box-shadow: none !important; max-width: 100% !important; padding: 0 !important; min-height: 0 !important; }
+  .empty-section { display: none !important; }
+  .cv-empty { display: none !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#form-content">Skip to form</a>
+<div id="app">
+
+  <div class="toolbar" role="banner">
+    <div>
+      <span class="t-title">Artist CV Builder</span>
+      <span class="t-sub" aria-hidden="true">Fill in the form &middot; Toggle sections on/off &middot; Print when ready</span>
+    </div>
+    <div class="toolbar-actions">
+      <span id="save-badge" class="save-badge" aria-live="polite" aria-atomic="true">&#x2713; Saved</span>
+      <button class="clear-btn" id="clear-btn" type="button">Clear Form</button>
+      <button class="print-btn" type="button" onclick="window.print()">Print / Save PDF</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="form-panel">
+      <nav id="section-nav" class="section-nav" aria-label="CV sections">
+        <!-- Rendered dynamically by buildNav() -->
+      </nav>
+      <div id="form-content" class="form-content" role="main" tabindex="-1"></div>
+    </div>
+    <div class="preview-panel" role="complementary" aria-label="CV preview">
+      <div
+        id="cv-preview"
+        class="cv-doc"
+        aria-live="polite"
+        aria-atomic="false"
+        aria-label="CV preview document"
+        role="region"
+      ></div>
+    </div>
+  </div>
+
+</div>
+<script>
+const STORAGE_KEY = 'jerome_artist_cv_v2';
+
+// ─────────────────────────────────────────────────────────────────
+// SECTION METADATA
+// defaultOn: whether section appears in CV on first load
+// group: used for nav grouping labels
+// ─────────────────────────────────────────────────────────────────
+const SECTION_META = {
+  contact:         { label: 'Contact Info',               defaultOn: true,  group: 'core',       alwaysOn: true },
+  education:       { label: 'Education',                  defaultOn: true,  group: 'core' },
+  awards:          { label: 'Awards & Grants',            defaultOn: true,  group: 'core' },
+  press:           { label: 'Press & Reviews',            defaultOn: true,  group: 'other' },
+  teaching:        { label: 'Teaching, Lectures & Other Experiences', defaultOn: true,  group: 'other' },
+  performances:    { label: 'Performances & Productions', defaultOn: false, group: 'performing' },
+  screenings:      { label: 'Screenings & Festivals',     defaultOn: false, group: 'film' },
+  published_works: { label: 'Published Works',            defaultOn: false, group: 'literary' },
+  albums:          { label: 'Albums',                     defaultOn: false, group: 'music' },
+  solo:            { label: 'Solo Exhibitions',           defaultOn: true,  group: 'visual' },
+  group:           { label: 'Group Exhibitions',          defaultOn: true,  group: 'visual' },
+  public_projects: { label: 'Public Projects',            defaultOn: false, group: 'visual' },
+  commissions:     { label: 'Commissions',                defaultOn: false, group: 'other' },
+  works_in_progress: { label: 'Works in Progress',        defaultOn: false, group: 'other' },
+};
+
+const NAV_GROUPS = {
+  core:       'General',
+  performing: 'Performing Arts',
+  film:       'Film',
+  literary:   'Literature',
+  music:      'Music',
+  visual:     'Tech and Visual Arts',
+  other:      'Other',
+};
+
+// Co-creator row appended to all work-based sections
+const COCREATOR_ROW = [{
+  key: 'cocreator',
+  label: 'Co-creator (if applicable)',
+  ph: 'Name, Role',
+  help: 'List any collaborators or co-creators on this work, e.g. "Maria Santos, Choreographer".',
+  rowClass: 'cocreator-row',
+}];
+
+// ─────────────────────────────────────────────────────────────────
+// FIELD CONFIG
+// Add `help` to any field to show guidance text beneath it.
+// Education uses year_started / year_ended instead of a single year.
+// ─────────────────────────────────────────────────────────────────
+const FIELD_CONFIG = {
+  education: [
+    [{key:'institution', label:'Institution', ph:'Yale School of Art'}],
+    [
+      {key:'degree',       label:'Degree',       ph:'MFA',    help:'Full degree name, e.g. MFA, BFA, BA, BS, Certificate.'},
+      {key:'year_started', label:'Year Started',  ph:'2010',   w:'5.5rem'},
+      {key:'year_ended',   label:'Year Ended',    ph:'2012',   w:'5.5rem', help:'Or "Present" if ongoing.'},
+    ],
+    [{key:'location', label:'Location', ph:'New Haven, CT'}],
+  ],
+  solo: [
+    [
+      {key:'title', label:'Exhibition Title', ph:'Works on Paper'},
+      {key:'year',  label:'Year',             ph:'2022', w:'5rem', help:'Year of opening.'},
+    ],
+    [{key:'venue',    label:'Venue / Gallery', ph:'Gallery Name', help:'Full name of the gallery, museum, or space.'}],
+    [{key:'location', label:'Location',        ph:'New York, NY'}],
+    ...COCREATOR_ROW.map(f => [f]),
+  ],
+  group: [
+    [
+      {key:'title', label:'Exhibition Title', ph:'New Acquisitions'},
+      {key:'year',  label:'Year',             ph:'2021', w:'5rem', help:'Year of opening.'},
+    ],
+    [{key:'venue',    label:'Venue / Gallery', ph:'Museum Name', help:'Full name of the gallery, museum, or space.'}],
+    [{key:'location', label:'Location',        ph:'Chicago, IL'}],
+    ...COCREATOR_ROW.map(f => [f]),
+  ],
+  performances: [
+    [
+      {key:'title', label:'Work Title', ph:'Untitled Duet'},
+      {key:'year',  label:'Year',       ph:'2023', w:'5rem'},
+    ],
+    [{key:'venue',    label:'Venue / Company', ph:'Walker Art Center', help:'Presenting organization, theater, or dance company.'}],
+    [{key:'location', label:'Location',        ph:'Minneapolis, MN'}],
+    [{key:'role',     label:'Role',            ph:'Choreographer, Director', help:'Your specific role in the production.'}],
+    ...COCREATOR_ROW.map(f => [f]),
+  ],
+  screenings: [
+    [
+      {key:'title', label:'Film / Work Title', ph:'Still Water'},
+      {key:'year',  label:'Year',              ph:'2022', w:'5rem'},
+    ],
+    [{key:'festival', label:'Festival / Venue', ph:'Sundance Film Festival', help:'Name of the festival, cinema, or venue.'}],
+    [{key:'location', label:'Location',         ph:'Park City, UT'}],
+    [{key:'role',     label:'Role',             ph:'Director, Producer', help:'Your specific role in the production.'}],
+    ...COCREATOR_ROW.map(f => [f]),
+  ],
+  published_works: [
+    [
+      {key:'title', label:'Title',  ph:'The Field',  help:'Title of the book, script, libretto, or other published work.'},
+      {key:'year',  label:'Year',   ph:'2023', w:'5rem'},
+    ],
+    [{key:'publisher', label:'Publisher / Press', ph:'Coffee House Press'}],
+    [{key:'type',      label:'Type',              ph:'Novel, Poetry Collection, Libretto', help:'E.g. Novel, Short Story Collection, Libretto, Screenplay.'}],
+    ...COCREATOR_ROW.map(f => [f]),
+  ],
+  albums: [
+    [
+      {key:'title', label:'Album Title', ph:'Tessellations'},
+      {key:'year',  label:'Year',        ph:'2023', w:'5rem'},
+    ],
+    [{key:'label',  label:'Label / Publisher', ph:'Nonesuch Records', help:'Record label, or "Self-released" if independently released.'}],
+    [{key:'format', label:'Format',            ph:'LP, EP, Digital', help:'E.g. LP, EP, Digital, Score.'}],
+    ...COCREATOR_ROW.map(f => [f]),
+  ],
+  awards: [
+    [
+      {key:'name', label:'Award / Grant Name', ph:'Jerome Fellowship', help:'Use the full official name.'},
+      {key:'year', label:'Year',               ph:'2023', w:'5rem'},
+    ],
+    [{key:'organization', label:'Awarding Organization', ph:'Jerome Foundation'}],
+  ],
+  commissions: [
+    [
+      {key:'title', label:'Work Title',   ph:'New Commission'},
+      {key:'year',  label:'Year',         ph:'2024', w:'5rem'},
+    ],
+    [{key:'commissioner', label:'Commissioned By', ph:'Minneapolis Institute of Art'}],
+    [{key:'location',     label:'Location',        ph:'Minneapolis, MN'}],
+    ...COCREATOR_ROW.map(f => [f]),
+  ],
+  public_projects: [
+    [
+      {key:'title', label:'Project Title', ph:'Gathering Ground'},
+      {key:'year',  label:'Year',          ph:'2023', w:'5rem'},
+    ],
+    [{key:'organization', label:'Organization / Venue', ph:'City of Minneapolis', help:'Commissioning body, partner organization, or site.'}],
+    [{key:'location',     label:'Location',             ph:'Minneapolis, MN'}],
+    [{key:'description',  label:'Brief Description',    ph:'Participatory mural project with...', help:'One sentence describing the work or community context. Optional.'}],
+    ...COCREATOR_ROW.map(f => [f]),
+  ],
+  press: [
+    [{key:'title',       label:'Article / Review Title', ph:'New Work in the Studio', help:'Title of the review, interview, or essay — not the publication.'}],
+    [
+      {key:'publication', label:'Publication',  ph:'Artforum', help:'Newspaper, magazine, catalog, or journal.'},
+      {key:'year',        label:'Year',         ph:'2023', w:'5rem'},
+    ],
+    [{key:'author', label:'Author (optional)', ph:'Jane Doe', help:'Include if the piece is a signed review or essay.'}],
+  ],
+  teaching: [
+    [
+      {key:'role', label:'Role / Title', ph:'Visiting Artist',  help:'E.g. Visiting Artist, Adjunct Lecturer, Workshop Leader.'},
+      {key:'year', label:'Year',         ph:'2022', w:'5rem',   help:'Year or range, e.g. 2020\u201322.'},
+    ],
+    [{key:'institution', label:'Institution / Venue', ph:'MCAD'}],
+    [{key:'location',    label:'Location',            ph:'Minneapolis, MN'}],
+  ],
+};
+
+// ── Utilities ─────────────────────────────────────────────────────
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function contactFieldId(key)              { return `field-${key}`; }
+function entryFieldId(section, index, key){ return `field-${section}-${index}-${key}`; }
+
+function emptyEntry(section) {
+  const fields = FIELD_CONFIG[section] || [];
+  return Object.fromEntries(fields.flat().map(f => [f.key, '']));
+}
+
+function defaultEnabled() {
+  const out = {};
+  for (const [k, v] of Object.entries(SECTION_META)) out[k] = v.defaultOn;
+  return out;
+}
+
+function defaultData() {
+  const data = { name:'', discipline:'', location:'', email:'', website:'', works_in_progress_text: '' };
+  for (const sec of Object.keys(FIELD_CONFIG)) data[sec] = [emptyEntry(sec)];
+  return data;
+}
+
+// ── State ─────────────────────────────────────────────────────────
+const state = {
+  activeSection: 'contact',
+  enabled: defaultEnabled(),
+  data: defaultData(),
+};
+
+// ── Persistence ───────────────────────────────────────────────────
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    const parsed = JSON.parse(saved);
+    if (parsed.data)    state.data    = { ...defaultData(),    ...parsed.data };
+    if (parsed.enabled) state.enabled = { ...defaultEnabled(), ...parsed.enabled };
+  } catch(e) {}
+}
+
+let saveTimer;
+function saveToStorage() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: state.data, enabled: state.enabled }));
+      flashSaved();
+    } catch(e) {}
+  }, 400);
+}
+
+function flashSaved() {
+  const badge = document.getElementById('save-badge');
+  if (!badge) return;
+  badge.classList.add('saved');
+  badge.textContent = '\u2713 Saved';
+  setTimeout(() => badge.classList.remove('saved'), 1800);
+}
+
+// ── Nav ───────────────────────────────────────────────────────────
+function buildNav() {
+  const nav = document.getElementById('section-nav');
+  const groups = {};
+  for (const [sec, meta] of Object.entries(SECTION_META)) {
+    if (!groups[meta.group]) groups[meta.group] = [];
+    groups[meta.group].push([sec, meta]);
+  }
+  let html = '';
+  for (const groupKey of Object.keys(NAV_GROUPS)) {
+    if (!groups[groupKey]) continue;
+    html += `<div class="nav-section-group">
+      <span class="nav-group-label">${esc(NAV_GROUPS[groupKey])}</span>`;
+    for (const [sec, meta] of groups[groupKey]) {
+      const isActive = sec === state.activeSection;
+      const isOn     = state.enabled[sec];
+      const dotClass = meta.alwaysOn || isOn ? 'nav-dot on' : 'nav-dot';
+      html += `<button
+        class="nav-btn${isActive ? ' active' : ''}"
+        type="button"
+        data-section="${sec}"
+        aria-current="${isActive ? 'true' : 'false'}"
+      >${esc(meta.label)}<span class="${dotClass}" aria-hidden="true"></span></button>`;
+    }
+    html += '</div>';
+  }
+  nav.innerHTML = html;
+}
+
+function updateNavIndicators() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    const sec  = btn.dataset.section;
+    const meta = SECTION_META[sec];
+    const isOn = meta.alwaysOn || state.enabled[sec];
+    const dot  = btn.querySelector('.nav-dot');
+    if (dot) dot.className = isOn ? 'nav-dot on' : 'nav-dot';
+    btn.classList.toggle('active', sec === state.activeSection);
+    btn.setAttribute('aria-current', sec === state.activeSection ? 'true' : 'false');
+  });
+}
+
+// ── Field helper ──────────────────────────────────────────────────
+function fieldWrap(label, id, attrs, w, help, helpId, rowClass) {
+  const helpHTML     = help ? `<span class="field-help" id="${esc(helpId)}">${esc(help)}</span>` : '';
+  const ariaDesc     = help ? ` aria-describedby="${esc(helpId)}"` : '';
+  const wrapStyle    = w ? ` style="flex:0 0 ${w}"` : '';
+  const rowClassAttr = rowClass ? ` ${rowClass}` : '';
+  return `<div class="field-wrap${rowClassAttr}"${wrapStyle}>
+    <label class="field-label" for="${esc(id)}">${esc(label)}</label>
+    <input class="field-input" id="${esc(id)}" ${attrs}${ariaDesc}>
+    ${helpHTML}
+  </div>`;
+}
+
+// ── Form rendering ────────────────────────────────────────────────
+function sectionToggleHTML(section) {
+  const meta    = SECTION_META[section];
+  if (meta.alwaysOn) return '';
+  const isOn    = state.enabled[section];
+  const labelTxt = isOn ? 'Included in CV' : 'Not included in CV — toggle on to include';
+  return `<div class="section-toggle-row">
+    <input
+      type="checkbox"
+      class="toggle-cb"
+      id="toggle-${esc(section)}"
+      data-toggle-section="${esc(section)}"
+      ${isOn ? 'checked' : ''}
+      aria-label="Include ${esc(meta.label)} section in CV"
+    >
+    <label class="toggle-label-text${isOn ? '' : ' off'}" for="toggle-${esc(section)}">${esc(labelTxt)}</label>
+    <span class="toggle-hint" aria-hidden="true">Green dot = included</span>
+  </div>`;
+}
+
+function contactFormHTML() {
+  const d = state.data;
+  return `
+    <h2 class="f-title">Contact &amp; Identity</h2>
+    <p class="f-tip">This information appears at the top of your CV.</p>
+    <div class="field-row">
+      ${fieldWrap('Full Name', contactFieldId('name'), `data-field="name" value="${esc(d.name)}" placeholder="Jane Smith" autocomplete="name"`, null, null, '')}
+    </div>
+    <div class="field-row">
+      ${fieldWrap('Discipline / Medium', contactFieldId('discipline'), `data-field="discipline" value="${esc(d.discipline)}" placeholder="Painter, Sculptor"`, null, 'Your primary medium or practice, e.g. Choreographer, Filmmaker, Interdisciplinary Artist.', 'help-discipline')}
+    </div>
+    <div class="field-row">
+      ${fieldWrap('City and State or Country', contactFieldId('location'), `data-field="location" value="${esc(d.location)}" placeholder="Minneapolis, MN" autocomplete="address-level2"`, null, null, '')}
+    </div>
+    <div class="field-row">
+      ${fieldWrap('Email', contactFieldId('email'), `data-field="email" value="${esc(d.email)}" placeholder="jane@example.com" type="email" autocomplete="email"`, null, null, '')}
+      ${fieldWrap('Website', contactFieldId('website'), `data-field="website" value="${esc(d.website)}" placeholder="janesmith.com" autocomplete="url"`, null, 'Omit \u201chttps://\u201d \u2014 it will display more cleanly.', 'help-website')}
+    </div>`;
+}
+
+function worksInProgressFormHTML() {
+  const val = state.data.works_in_progress_text || '';
+  return `
+    <h2 class="f-title">Works in Progress</h2>
+    ${sectionToggleHTML('works_in_progress')}
+    <p class="f-tip">Describe any current or upcoming works. This section prints as free-form text.</p>
+    <div class="field-wrap">
+      <label class="field-label" for="field-wip-text">Works in Progress</label>
+      <textarea
+        class="field-textarea"
+        id="field-wip-text"
+        data-field="works_in_progress_text"
+        placeholder="e.g. Currently developing a new performance work exploring..."
+        aria-describedby="help-wip"
+      >${esc(val)}</textarea>
+      <span class="field-help" id="help-wip">Write freely. Line breaks will be preserved in the CV output.</span>
+    </div>`;
+}
+
+function listSectionHTML(section) {
+  const items  = state.data[section] || [];
+  const config = FIELD_CONFIG[section] || [];
+  const meta   = SECTION_META[section];
+
+  const entries = items.map((item, i) => {
+    const rows = config.map(row => {
+      const rowClass = (row.length === 1 && row[0].rowClass) ? row[0].rowClass : '';
+      return `<div class="field-row${rowClass ? ' ' + rowClass : ''}">
+        ${row.map(f => {
+          const fid    = entryFieldId(section, i, f.key);
+          const helpId = f.help ? `help-${section}-${i}-${f.key}` : '';
+          return fieldWrap(
+            f.label, fid,
+            `data-section="${section}" data-index="${i}" data-field="${f.key}" value="${esc(item[f.key] || '')}" placeholder="${esc(f.ph || '')}"`,
+            f.w || null, f.help || null, helpId
+          );
+        }).join('')}
+      </div>`;
+    }).join('');
+
+    return `<div class="entry-card" id="entry-card-${section}-${i}">
+      <div class="entry-hdr">
+        <span class="entry-num" aria-hidden="true">Entry ${i + 1}</span>
+        <button class="rm-btn" type="button" data-section="${section}" data-index="${i}"
+          aria-label="Remove entry ${i + 1} from ${esc(meta.label)}">Remove</button>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  return `
+    <h2 class="f-title">${esc(meta.label)}</h2>
+    ${sectionToggleHTML(section)}
+    <p class="f-tip">List entries in reverse chronological order (most recent first).</p>
+    ${entries}
+    <button class="add-btn" type="button" data-section="${section}"
+      aria-label="Add entry to ${esc(meta.label)}">+ Add Entry</button>`;
+}
+
+// ── CV preview ────────────────────────────────────────────────────
+function cvRow(year, main, sub, collab, desc) {
+  return `<div class="cv-entry">
+    <div class="cv-yr">${esc(year || '')}</div>
+    <div>
+      ${main                    ? `<span class="cv-main">${esc(main)}</span>` : ''}
+      ${main && (sub || collab || desc) ? '<br>' : ''}
+      ${sub                     ? `<span class="cv-sub">${esc(sub)}</span>` : ''}
+      ${sub && (collab || desc) ? '<br>' : ''}
+      ${collab                  ? `<span class="cv-collab">Co-creator: ${esc(collab)}</span>` : ''}
+      ${collab && desc          ? '<br>' : ''}
+      ${desc                    ? `<span class="cv-sub" style="font-style:italic">${esc(desc)}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function cvSectionHTML(section, title, items, getEntry) {
+  if (!state.enabled[section]) return '';
+  const entries = (items || []).map(getEntry).filter(e => e.main || e.sub);
+  if (!entries.length) return '';
+  const rows = entries.map(e => cvRow(e.year, e.main, e.sub, e.collab, e.desc)).join('');
+  return `<section class="cv-section">
+    <h3 class="cv-sec-title">${esc(title)}</h3>
+    ${rows}
+  </section>`;
+}
+
+function eduYear(e) {
+  const s = e.year_started, n = e.year_ended;
+  if (s && n) return `${s}\u2013${n}`;
+  if (s)      return `${s}\u2013`;
+  if (n)      return n;
+  return '';
+}
+
+function cvWorksInProgressHTML(text) {
+  if (!state.enabled['works_in_progress'] || !text || !text.trim()) return '';
+  const lines = text.trim().split('\n').map(l => esc(l)).join('<br>');
+  return `<section class="cv-section">
+    <h3 class="cv-sec-title">Works in Progress</h3>
+    <p class="cv-sub" style="line-height:1.7">${lines}</p>
+  </section>`;
+}
+
+function renderCV() {
+  const d = state.data;
+  const metaParts = [d.discipline, d.location, d.email, d.website].filter(Boolean);
+  const metaHTML = metaParts.length
+    ? `<p class="cv-meta">${metaParts.map((p, i) => (i ? '<span class="sep" aria-hidden="true">&middot;</span>' : '') + esc(p)).join('')}</p>`
+    : '';
+
+  const sectionsHTML = [
+    // General
+    cvSectionHTML('education', 'Education', d.education, e => ({
+      year: eduYear(e), main: [e.degree, e.institution].filter(Boolean).join(', '), sub: e.location,
+    })),
+    cvSectionHTML('awards', 'Awards & Grants', d.awards, e => ({
+      year: e.year, main: e.name, sub: e.organization,
+    })),
+    // Performing Arts
+    cvSectionHTML('performances', 'Performances & Productions', d.performances, e => ({
+      year: e.year, main: e.title, sub: [e.role, e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator,
+    })),
+    // Film
+    cvSectionHTML('screenings', 'Screenings & Film Festivals', d.screenings, e => ({
+      year: e.year, main: e.title, sub: [e.role, e.festival, e.location].filter(Boolean).join(', '), collab: e.cocreator,
+    })),
+    // Literature
+    cvSectionHTML('published_works', 'Published Works', d.published_works, e => ({
+      year: e.year, main: e.title, sub: [e.type, e.publisher].filter(Boolean).join(', '), collab: e.cocreator,
+    })),
+    // Music
+    cvSectionHTML('albums', 'Albums', d.albums, e => ({
+      year: e.year, main: e.title, sub: [e.format, e.label].filter(Boolean).join(', '), collab: e.cocreator,
+    })),
+    // Tech and Visual Arts
+    cvSectionHTML('solo', 'Solo Exhibitions', d.solo, e => ({
+      year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator,
+    })),
+    cvSectionHTML('group', 'Group Exhibitions', d.group, e => ({
+      year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator,
+    })),
+    cvSectionHTML('public_projects', 'Public Projects', d.public_projects, e => ({
+      year: e.year, main: e.title, sub: [e.organization, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
+    })),
+    // Other
+    cvSectionHTML('commissions', 'Commissions', d.commissions, e => ({
+      year: e.year, main: e.title, sub: [e.commissioner, e.location].filter(Boolean).join(', '), collab: e.cocreator,
+    })),
+    cvSectionHTML('press', 'Press & Reviews', d.press, e => ({
+      year: e.year, main: e.title, sub: [e.publication, e.author ? `by ${e.author}` : ''].filter(Boolean).join(', '),
+    })),
+    cvSectionHTML('teaching', 'Teaching, Lectures & Other Experiences', d.teaching, e => ({
+      year: e.year, main: [e.role, e.institution].filter(Boolean).join(', '), sub: e.location,
+    })),
+    cvWorksInProgressHTML(d.works_in_progress_text),
+  ].join('');
+
+  document.getElementById('cv-preview').innerHTML =
+    `<h1 class="cv-name${!d.name ? ' empty' : ''}">${esc(d.name || 'Your Name')}</h1>
+    ${metaHTML}
+    <hr class="cv-rule" aria-hidden="true">
+    ${sectionsHTML}`;
+}
+
+function renderForm(section, focusTarget) {
+  const container = document.getElementById('form-content');
+  if (section === 'contact') {
+    container.innerHTML = contactFormHTML();
+  } else if (section === 'works_in_progress') {
+    container.innerHTML = worksInProgressFormHTML();
+  } else {
+    container.innerHTML = listSectionHTML(section);
+  }
+  if (focusTarget === 'container') {
+    container.focus();
+  } else if (focusTarget) {
+    const el = document.getElementById(focusTarget);
+    if (el) el.focus();
+  }
+}
+
+// ── Events ────────────────────────────────────────────────────────
+document.getElementById('form-content').addEventListener('input', e => {
+  if (!e.target.classList.contains('field-input') && !e.target.classList.contains('field-textarea')) return;
+  const { field, section, index } = e.target.dataset;
+  if (section !== undefined && index !== undefined) {
+    state.data[section][parseInt(index)][field] = e.target.value;
+  } else if (field) {
+    state.data[field] = e.target.value;
+  }
+  renderCV();
+  saveToStorage();
+});
+
+document.getElementById('form-content').addEventListener('change', e => {
+  if (!e.target.classList.contains('toggle-cb')) return;
+  const sec = e.target.dataset.toggleSection;
+  if (!sec) return;
+  state.enabled[sec] = e.target.checked;
+  const labelEl = e.target.nextElementSibling;
+  if (labelEl) {
+    labelEl.textContent = e.target.checked ? 'Included in CV' : 'Not included in CV \u2014 toggle on to include';
+    labelEl.className = 'toggle-label-text' + (e.target.checked ? '' : ' off');
+  }
+  updateNavIndicators();
+  renderCV();
+  saveToStorage();
+});
+
+document.getElementById('form-content').addEventListener('click', e => {
+  const add = e.target.closest('.add-btn');
+  const rm  = e.target.closest('.rm-btn');
+  if (add) {
+    const sec = add.dataset.section;
+    if (!state.data[sec]) state.data[sec] = [];
+    state.data[sec].push(emptyEntry(sec));
+    const newIdx = state.data[sec].length - 1;
+    const firstKey = (FIELD_CONFIG[sec][0][0]).key;
+    renderForm(sec, entryFieldId(sec, newIdx, firstKey));
+    renderCV(); saveToStorage();
+  }
+  if (rm) {
+    const sec = rm.dataset.section;
+    const idx = parseInt(rm.dataset.index);
+    const hadMultiple = state.data[sec].length > 1;
+    state.data[sec].splice(idx, 1);
+    if (!state.data[sec].length) state.data[sec].push(emptyEntry(sec));
+    const focusIdx = hadMultiple ? Math.max(0, idx - 1) : 0;
+    const firstKey = (FIELD_CONFIG[sec][0][0]).key;
+    renderForm(sec, entryFieldId(sec, focusIdx, firstKey));
+    renderCV(); saveToStorage();
+  }
+});
+
+document.getElementById('section-nav').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-btn');
+  if (!btn) return;
+  state.activeSection = btn.dataset.section;
+  updateNavIndicators();
+  renderForm(state.activeSection, 'container');
+});
+
+document.getElementById('clear-btn').addEventListener('click', () => {
+  if (!confirm('Clear all form data? This cannot be undone.')) return;
+  state.data    = defaultData();
+  state.enabled = defaultEnabled();
+  localStorage.removeItem(STORAGE_KEY);
+  buildNav();
+  renderForm(state.activeSection);
+  renderCV();
+  const badge = document.getElementById('save-badge');
+  badge.textContent = 'Cleared';
+  badge.classList.remove('saved');
+});
+
+// ── Init ──────────────────────────────────────────────────────────
+loadFromStorage();
+buildNav();
+renderForm('contact');
+renderCV();
+</script>
+</body>
+</html>

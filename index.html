@@ -162,6 +162,15 @@ body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; backg
 .entry-card { border: 1px solid #ddd; padding: 0.75rem; margin-bottom: 0.625rem; background: #f5f5f5; }
 .entry-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.625rem; }
 .entry-num { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8125rem; font-weight: 700; color: #555; letter-spacing: .1em; text-transform: uppercase; }
+.entry-hdr-actions { display: flex; gap: 0.25rem; align-items: center; }
+.reorder-btn {
+  background: none; border: 1px solid #bbb; color: #555;
+  padding: 0.125rem 0.4rem; font-size: 0.75rem; cursor: pointer; line-height: 1;
+  font-family: 'Barlow', sans-serif; transition: all .15s;
+}
+.reorder-btn:hover:not(:disabled) { border-color: #000; color: #000; background: #eee; }
+.reorder-btn:disabled { opacity: 0.3; cursor: default; }
+.reorder-btn:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
 .rm-btn {
   background: none; border: 1px solid #bbb; color: #333;
   padding: 0.125rem 0.5rem; font-size: 0.875rem; cursor: pointer;
@@ -308,7 +317,7 @@ body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; backg
 /* ── Print ───────────────────────────────────────────────────── */
 @media print {
   @page {
-    margin: 0.75in 0.75in 1in 0.75in;
+    margin: 0.75in;
     @bottom-right {
       content: "Page " counter(page);
       font-family: 'Barlow', sans-serif;
@@ -869,8 +878,14 @@ function listSectionHTML(section) {
     return `<div class="entry-card" id="entry-card-${section}-${i}">
       <div class="entry-hdr">
         <span class="entry-num" aria-hidden="true">Entry ${i + 1}</span>
-        <button class="rm-btn" type="button" data-section="${section}" data-index="${i}"
-          aria-label="Remove entry ${i + 1} from ${esc(meta.label)}">Remove</button>
+        <div class="entry-hdr-actions">
+          <button class="reorder-btn" type="button" data-section="${section}" data-index="${i}" data-dir="up"
+            aria-label="Move entry ${i + 1} up" ${i === 0 ? 'disabled' : ''}>↑</button>
+          <button class="reorder-btn" type="button" data-section="${section}" data-index="${i}" data-dir="down"
+            aria-label="Move entry ${i + 1} down" ${i === items.length - 1 ? 'disabled' : ''}>↓</button>
+          <button class="rm-btn" type="button" data-section="${section}" data-index="${i}"
+            aria-label="Remove entry ${i + 1} from ${esc(meta.label)}">Remove</button>
+        </div>
       </div>
       ${rows}
     </div>`;
@@ -1113,6 +1128,20 @@ document.getElementById('form-content').addEventListener('click', e => {
     const firstKey = (FIELD_CONFIG[sec][0][0]).key;
     renderForm(sec, entryFieldId(sec, focusIdx, firstKey));
     renderCV(); updateNavIndicators(); saveToStorage();
+  }
+  const reorder = e.target.closest('.reorder-btn');
+  if (reorder && !reorder.disabled) {
+    const sec = reorder.dataset.section;
+    const idx = parseInt(reorder.dataset.index);
+    const dir = reorder.dataset.dir;
+    const arr = state.data[sec];
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx >= 0 && swapIdx < arr.length) {
+      [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
+      const firstKey = (FIELD_CONFIG[sec][0][0]).key;
+      renderForm(sec, entryFieldId(sec, swapIdx, firstKey));
+      renderCV(); saveToStorage();
+    }
   }
 });
 

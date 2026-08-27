@@ -147,7 +147,7 @@ body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; backg
 .field-input:hover { border-color: #555; }
 .field-input:focus { border-color: #000; box-shadow: 0 0 0 3px rgba(0,0,0,.12); }
 .field-input::placeholder { color: #767676; }
-.field-help { font-size: 0.8125rem; color: #767676; margin-top: 0.25rem; line-height: 1.4; font-style: italic; }
+.field-help { font-size: 0.8125rem; color: #767676; margin-top: 0.25rem; line-height: 1.4; font-style: italic; white-space: pre-line; }
 .field-textarea {
   width: 100%; border: 1px solid #bbb; padding: 0.5rem 0.625rem;
   font-family: 'Barlow', sans-serif; font-size: 1rem; color: #000;
@@ -429,56 +429,102 @@ const SECTION_META = {
   contact:          { label: 'Contact Info',               defaultOn: true,  group: 'core',       alwaysOn: true },
   artist_statement: { label: 'Brief Artist Statement',     defaultOn: true,  group: 'core' },
   education:        { label: 'Education',                  defaultOn: true,  group: 'core' },
-  commissions:      { label: 'Commissions',                defaultOn: true,  group: 'other',      tip: 'List the title of the commissioned work or public project, date, site, and sponsor or producer.' },
   works_in_progress:{ label: 'Works in Progress',          defaultOn: true,  group: 'other',      tip: 'List works you are currently developing but have not yet completed. Give the title, the year you expect to finish, and a short description of the project and where it stands.' },
-  awards:           { label: 'Awards & Grants',            defaultOn: true,  group: 'other',      tip: 'List recent awards first, working backward in chronological order. Include project grants, prizes won in competition, and fellowships.' },
-  residencies:      { label: 'Residencies',                defaultOn: true,  group: 'other',      tip: 'List artist residencies you have participated in, listing the most recent first.' },
-  teaching:         { label: 'Teaching, Lectures & Other Experiences', defaultOn: true, group: 'other', tip: 'List work that relates to your profession: teaching positions, lectures given, curatorial projects, installations, or recordings on which you have assisted or performed.' },
-  press:            { label: 'Press & Reviews',            defaultOn: true,  group: 'other',      tip: 'List selected press coverage and reviews of your work, listing the most recent coverage first.' },
-  selected_writing: { label: 'Selected Writing',           defaultOn: true,  group: 'other',      tip: 'List writing you have published about art or your field: essays, criticism, catalog texts, interviews you conducted. This is writing by you, as distinct from press coverage about you. Most recent first.' },
-  other_experience: { label: 'Other Artistic Experience',  defaultOn: true,  group: 'other',      tip: 'Use this section to list your artistic experiences as a non-generative artist: for example, as a dancer, musician, editor, or actor.' },
+  awards:           { label: 'Awards & Grants',            defaultOn: true,  group: 'other',      tip: 'List all awards and grants, most recent first. Include project grants, prizes won in competition, and fellowships.' },
+  residencies:      { label: 'Residencies',                defaultOn: true,  group: 'other',      tip: 'List all artist residencies you have participated in, most recent first.' },
+  teaching:         { label: 'Teaching & Lectures',        defaultOn: true,  group: 'other',      tip: 'List academic work that relates to your artistic practice: teaching positions and lectures given. Most recent first.' },
+  other_experience: { label: 'Other Professional Artistic Experience', defaultOn: true, group: 'other', tip: 'Use this section to list your other professional artistic experiences, for example as a dancer, musician, editor, actor, or curator. Most recent first.' },
+  press:            { label: 'Press & Reviews',            defaultOn: true,  group: 'other',      tip: 'List selected press coverage and reviews of your work, most recent first.' },
+  selected_writing: { label: 'Selected Writing',           defaultOn: true,  group: 'other',      tip: 'List writing you have published about art or your artistic field: essays, criticism, catalog texts, interviews you conducted. This is writing by you, as distinct from press coverage about you. Most recent first.' },
   additional_info:  { label: 'Additional Information',     defaultOn: true,  group: 'other',      tip: 'Add as many custom sections as you need. Each entry gets its own header and content block in the CV output.' },
-  performances:     { label: 'Performances & Productions', defaultOn: true,  group: 'performing', tip: 'List works or projects for which you are the creator and lead generative artist, such as the choreographer or playwright. List the most recent events first. Include year, title, presenting organization, and city. You may want to include any featured collaborators on the piece. For playwrights, indicate whether the work was a reading or full production, and whether it is a one-act, full-length, or musical.' },
+  performances:     { label: 'Performances & Productions', defaultOn: true,  group: 'performing', tip: 'List works for which you are the choreographer, composer, or playwright. Most recent first. Include year, title, presenting organization, and city. You may want to include any featured collaborators on the piece. For playwrights, indicate whether the work was a reading or full production, and whether it is a one-act, full-length, or musical.' },
   albums:           { label: 'Albums',                     defaultOn: true,  group: 'performing', tip: 'List all recordings of your work. Include album title, work title (if you are not the only artist on the album), record label, catalog number, and year released.' },
-  screenings:       { label: 'Completed Films',     defaultOn: true,  group: 'film',       tip: 'List screenings and festivals. Include festival name, location, and year. For works both completed and in production, you may categorize by your role (director, writer, etc.) or type of work (TV, feature, documentary, etc.).' },
-  published_works:  { label: 'Published Works',            defaultOn: true,  group: 'literary',   tip: 'Include book title, publisher, and year of publication. Consider separate entries for chapter books, anthologies, and journals.' },
-  readings:         { label: 'Readings',                   defaultOn: true,  group: 'literary',   tip: 'List the title of the work presented and the location. Include the most recent readings first.' },
-  solo:             { label: 'Solo Exhibitions',           defaultOn: true,  group: 'visual',     tip: 'List the most recent exhibitions first.' },
-  group:            { label: 'Group Exhibitions',          defaultOn: true,  group: 'visual',     tip: 'List your most recent group exhibitions first.' },
-  public_projects:  { label: 'Public Projects',            defaultOn: true,  group: 'visual',     tip: 'List any projects that have taken place in public space, listing the most recent projects first.' },
+  screenings:       { label: 'Completed Films',            defaultOn: true,  group: 'film',       tip: 'List all completed films, most recent first. Include festival name, location, and year for each screening. You may categorize by your role (director, writer, etc.) or type of work (TV, feature, documentary, etc.).' },
+  published_works:  { label: 'Published Works',            defaultOn: true,  group: 'literary',   tip: 'List all published works, most recent first. Include title, publisher, and year of publication. Consider separate entries for chapter books, anthologies, and journals.' },
+  readings:         { label: 'Readings',                   defaultOn: true,  group: 'literary',   tip: 'List all public readings, most recent first. Include the title and the location.' },
+  solo:             { label: 'Solo Exhibitions',           defaultOn: true,  group: 'visual',     tip: 'List all solo exhibitions, most recent first.' },
+  group:            { label: 'Group Exhibitions',          defaultOn: true,  group: 'visual',     tip: 'List all group exhibitions, most recent first.' },
+  public_projects:  { label: 'Public Projects',            defaultOn: true,  group: 'visual',     tip: 'List any projects that have taken place in public space, most recent first.' },
+  collections:      { label: 'Collections',                defaultOn: true,  group: 'visual',     tip: 'List works held in museum, public, corporate, or private collections. Most recent acquisitions first.' },
 };
 
 const NAV_GROUPS = {
   core:       'General',
-  performing: 'Performing Arts',
+  performing: 'Performing Arts (Dance, Music, Theater)',
   film:       'Film',
   literary:   'Literature',
-  music:      'Music',
   visual:     'Visual Arts & Tech-Centered Art',
   other:      'Other',
 };
 
-// Co-creator row appended to all work-based sections
-const COCREATOR_ROW = [{
-  key: 'cocreator',
-  label: 'Co-creator (if applicable)',
-  ph: 'Name, Role',
-  help: 'List any collaborators or co-creators on this work, e.g. "Maria Santos, Choreographer".',
-  rowClass: 'cocreator-row',
-}];
+// Co-creator row appended to all work-based sections.
+// The example role changes per section so it matches the artistic field.
+function cocreatorRow(exampleRole, labelOverride) {
+  const label = labelOverride || 'Co-creator (if applicable)';
+  return [[{
+    key: 'cocreator',
+    label,
+    ph: 'Name, Role',
+    help: `List any collaborators or co-creators on this work, e.g. \u201cMaria Santos, ${exampleRole}\u201d.`,
+    rowClass: 'cocreator-row',
+  }]];
+}
 
-const DESCRIPTION_ROW = [{
-  key: 'description',
-  label: 'Description (optional)',
-  ph: 'Brief description or additional context.',
-  help: 'One to two sentences. Optional — leave blank if not needed.',
-}];
+// Description row.
+// prompt  = section-specific questions, shown as permanent help beneath the field.
+// sample  = example text, shown as gray placeholder inside the field. Placeholders
+//           disappear once the artist types, so nothing essential belongs here.
+const DESCRIPTION_DEFAULT_HELP = 'One to two sentences. Optional, leave blank if not needed.';
+
+function descriptionRow(prompt, sample) {
+  return [[{
+    key: 'description',
+    label: 'Description (optional)',
+    rows: 2,
+    ph: sample || '',
+    help: prompt || DESCRIPTION_DEFAULT_HELP,
+  }]];
+}
 
 // ─────────────────────────────────────────────────────────────────
 // FIELD CONFIG
 // Add `help` to any field to show guidance text beneath it.
 // Education uses year_started / year_ended instead of a single year.
 // ─────────────────────────────────────────────────────────────────
+const PROMPT_PERFORMANCES = 'Was this an evening-length or short work? Was it a solo performance or an ensemble work? Was it commissioned, and by whom?';
+const SAMPLE_PERFORMANCES = `Evening-length work featuring 8 performers
+15-minute solo work as part of a shared evening`;
+
+const PROMPT_ALBUMS = 'How many original songs or compositions are on the album?';
+const SAMPLE_ALBUMS = 'EP with 3 original compositions';
+
+const PROMPT_SCREENINGS = 'What is the length and genre of the film?';
+const SAMPLE_SCREENINGS = `A feature-length animated film
+A short film combining narrative and documentary genres`;
+
+const PROMPT_PUBLISHED = 'What type of publication is this (novel, memoir, essay or short story collection, anthology, chapbook)? How many works are in the publication?';
+const SAMPLE_PUBLISHED = `Chapbook featuring 12 original poems with accompanying illustrations
+Short story published in the anthology New Voices from the Upper Midwest`;
+
+const PROMPT_READINGS = 'What did you read? Who did you read with?';
+const SAMPLE_READINGS = 'Read excerpts from two short stories alongside 3 other early career writers';
+
+const PROMPT_SOLO = 'What type of work did you show? How many works were on display?';
+const SAMPLE_SOLO = '12 original paintings shown alongside 1 longform video work';
+
+const PROMPT_GROUP = 'Who curated the show? Who else was in the show? What work did you display?';
+const SAMPLE_GROUP = `Curated by Jane Doe, included 2 sculptures and 1 video work
+Curated by Jane Doe, alongside artists Joanne Smith and John Doe`;
+
+const PROMPT_PUBLIC_PROJECTS = 'What type of work was commissioned or displayed, and how?';
+const SAMPLE_PUBLIC_PROJECTS = '4 newly commissioned sculptures placed throughout the park';
+
+const PROMPT_COLLECTIONS = 'What type of work is held in the collection?';
+const SAMPLE_COLLECTIONS = `Oil on canvas
+Three-channel video installation, gift of the artist`;
+
+const SAMPLE_WIP = 'Feature documentary about the last commercial fishing families on the lake, currently in post-production';
+
 const FIELD_CONFIG = {
   education: [
     [{key:'institution', label:'Institution', ph:'Meridian University'}],
@@ -498,8 +544,8 @@ const FIELD_CONFIG = {
       {key:'year',  label:'Year',            ph:'2023', w:'6.5rem', help:'Year of opening.'},
     ],
     [{key:'location', label:'Location',        ph:'Anytown, AS'}],
-    ...COCREATOR_ROW.map(f => [f]),
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...cocreatorRow('Collaborating Artist'),
+    ...descriptionRow(PROMPT_SOLO, SAMPLE_SOLO),
   ],
   group: [
     [{key:'title', label:'Exhibition Title', ph:'Holding Patterns'}],
@@ -508,48 +554,35 @@ const FIELD_CONFIG = {
       {key:'year',  label:'Year',            ph:'2024', w:'6.5rem', help:'Year of opening.'},
     ],
     [{key:'location', label:'Location',        ph:'Anytown, AS'}],
-    ...COCREATOR_ROW.map(f => [f]),
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...cocreatorRow('Collaborating Artist'),
+    ...descriptionRow(PROMPT_GROUP, SAMPLE_GROUP),
+  ],
+  public_projects: [
+    [{key:'title', label:'Project Title', ph:'Gathering Ground'}],
+    [{key:'year',  label:'Year',          ph:'2023', w:'6.5rem'}],
+    [{key:'organization', label:'Organization / Venue', ph:'City of Harborview', help:'Commissioning body, partner organization, or site.'}],
+    [{key:'location',     label:'Location',             ph:'Anytown, AS'}],
+    ...cocreatorRow('Collaborating Artist'),
+    ...descriptionRow(PROMPT_PUBLIC_PROJECTS, SAMPLE_PUBLIC_PROJECTS),
+  ],
+  collections: [
+    [{key:'title', label:'Work Title', ph:'Soft Structures No. 4'}],
+    [{key:'year',  label:'Year',       ph:'2024', w:'6.5rem', help:'Year the work entered the collection.'}],
+    [{key:'organization', label:'Collection / Institution', ph:'Midpoint Visual Arts Center', help:'Museum, public, corporate, or private collection. Write \u201cPrivate collection\u201d if the holder is not named.'}],
+    [{key:'location',     label:'Location',                 ph:'Anytown, AS'}],
+    ...descriptionRow(PROMPT_COLLECTIONS, SAMPLE_COLLECTIONS),
   ],
   performances: [
     [
       {key:'title', label:'Work Title', ph:'Bracing for a Minor Event'},
       {key:'year',  label:'Year',       ph:'2022', w:'6.5rem'},
     ],
-    [{key:'role',     label:'Role',            ph:'Choreographer, Playwright', help:'Your specific role or roles in the presentation.'}],
+    [{key:'role',     label:'Role',            ph:'Choreographer, Composer, Playwright', help:'Your specific role or roles in the presentation.'}],
     [{key:'venue',    label:'Venue / Company', ph:'The Annex', help:'Presenting venue, organization, etc.'}],
     [{key:'location', label:'Location',        ph:'Anytown, AS'}],
     [{key:'duration', label:'Duration',        ph:'75 min.', help:'E.g. 75 min., 2 hrs., 45 min. no intermission.'}],
-    ...COCREATOR_ROW.map(f => [f]),
-    ...DESCRIPTION_ROW.map(f => [f]),
-  ],
-  screenings: [
-    [
-      {key:'title', label:'Film / Work Title', ph:'Still Waters'},
-      {key:'year',  label:'Year',              ph:'2024', w:'6.5rem'},
-    ],
-    [{key:'role',     label:'Role',            ph:'Director, Editor', help:'Your specific role or roles in the film.'}],
-    [{key:'duration', label:'Runtime',         ph:'82 min.', help:'E.g. 82 min., 14 min., 6 min.'}],
-    ...COCREATOR_ROW.map(f => [f]),
-    ...DESCRIPTION_ROW.map(f => [f]),
-    [{key:'screenings_list', label:'Screening Locations', ph:'', rows: 4,
-      help:'List each screening on its own line. Include Festival Name, Year, and Country. E.g. "Signal Film Festival, 2024, Canada"'}],
-  ],
-  published_works: [
-    [
-      {key:'title', label:'Title', ph:'The Field', help:'Title of the book, script, libretto, or other published work.'},
-      {key:'year',  label:'Year',  ph:'2023', w:'6.5rem'},
-    ],
-    [{key:'publisher', label:'Publisher / Press', ph:'Common Thread Press'}],
-    ...COCREATOR_ROW.map(f => [f]),
-    ...DESCRIPTION_ROW.map(f => [f]),
-  ],
-  readings: [
-    [{key:'title', label:'Name of Event or Series', ph:'Open Mic at the Loft', help:'Name of the event, series, or reading.'}],
-    [{key:'year',  label:'Year', ph:'2024', w:'6.5rem'}],
-    [{key:'venue',    label:'Venue / Organization', ph:'Open Book Literary Center'}],
-    [{key:'location', label:'Location',             ph:'Anytown, AS'}],
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...cocreatorRow('Composer'),
+    ...descriptionRow(PROMPT_PERFORMANCES, SAMPLE_PERFORMANCES),
   ],
   albums: [
     [
@@ -560,58 +593,70 @@ const FIELD_CONFIG = {
     [{key:'role',     label:'Role(s)',            ph:'Composer, Producer', help:'Your role or roles on this album.'}],
     [{key:'format',   label:'Format',             ph:'LP, EP, Digital', help:'LP, EP, Digital, etc.'}],
     [{key:'duration', label:'Running Time',       ph:'42:18', help:'Total running time, e.g. 42:18 or 38 min.'}],
-    ...COCREATOR_ROW.map(f => [f]),
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...cocreatorRow('Producer'),
+    ...descriptionRow(PROMPT_ALBUMS, SAMPLE_ALBUMS),
+  ],
+  screenings: [
+    [
+      {key:'title', label:'Film / Work Title', ph:'Still Waters'},
+      {key:'year',  label:'Year',              ph:'2024', w:'6.5rem'},
+    ],
+    [{key:'role',     label:'Role',            ph:'Director, Editor', help:'Your specific role or roles in the film.'}],
+    [{key:'duration', label:'Runtime',         ph:'82 min.', help:'E.g. 82 min., 14 min., 6 min.'}],
+    ...cocreatorRow('Co-Director', 'Co-Director (if applicable)'),
+    ...descriptionRow(PROMPT_SCREENINGS, SAMPLE_SCREENINGS),
+    [{key:'screenings_list', label:'Screening Locations', ph:'', rows: 4,
+      help:'List each screening on its own line. Include Festival Name, Year, and Country. E.g. "Signal Film Festival, 2024, Canada"'}],
+  ],
+  published_works: [
+    [
+      {key:'title', label:'Title', ph:'The Field', help:'Title of the book, short story, essay, poem, or other published work.'},
+      {key:'year',  label:'Year',  ph:'2023', w:'6.5rem'},
+    ],
+    [{key:'publisher', label:'Publisher / Press', ph:'Common Thread Press'}],
+    ...cocreatorRow('Illustrator'),
+    ...descriptionRow(PROMPT_PUBLISHED, SAMPLE_PUBLISHED),
+  ],
+  readings: [
+    [{key:'title', label:'Name of Event or Series', ph:'Open Mic at the Loft', help:'Name of the event, series, or reading.'}],
+    [{key:'year',  label:'Year', ph:'2024', w:'6.5rem'}],
+    [{key:'venue',    label:'Venue / Organization', ph:'Open Book Literary Center'}],
+    [{key:'location', label:'Location',             ph:'Anytown, AS'}],
+    ...descriptionRow(PROMPT_READINGS, SAMPLE_READINGS),
   ],
   awards: [
     [{key:'name', label:'Award / Grant Name', ph:'The Evergreen Arts Fellowship', help:'Use the full official name.'}],
     [{key:'year', label:'Year', ph:'2023', w:'6.5rem'}],
     [{key:'organization', label:'Awarding Organization', ph:'Clearview Foundation'}],
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...descriptionRow(),
   ],
   residencies: [
-    [{key:'name', label:'Residency Name', ph:'Hollow Creek Artist Residency', help:'Name of the residency program, and the host organization if they differ.'}],
+    [{key:'name', label:'Residency Program Name', ph:'Little Stream Artist Residency', help:'Name of the residency program.'}],
+    [{key:'organization', label:'Host Organization', ph:'Hollow Creek Arts Center', help:'The organization or site that hosts the program. Leave blank if it is the same as the program name.'}],
     [{key:'year', label:'Year', ph:'2024', w:'6.5rem', help:'Or a range, e.g. 2023\u20132024.'}],
     [{key:'location', label:'Residency Location', ph:'Anytown, AS'}],
-    ...DESCRIPTION_ROW.map(f => [f]),
-  ],
-  commissions: [
-    [{key:'title', label:'Work Title', ph:'Towards a new day...'}],
-    [{key:'year',  label:'Year',       ph:'2024', w:'6.5rem'}],
-    [{key:'commissioner', label:'Commissioned By', ph:'Cultural Works Project'}],
-    [{key:'location',     label:'Location',        ph:'Anytown, AS'}],
-    ...COCREATOR_ROW.map(f => [f]),
-    ...DESCRIPTION_ROW.map(f => [f]),
-  ],
-  public_projects: [
-    [{key:'title', label:'Project Title', ph:'Gathering Ground'}],
-    [{key:'year',  label:'Year',          ph:'2023', w:'6.5rem'}],
-    [{key:'organization', label:'Organization / Venue', ph:'City of Harborview', help:'Commissioning body, partner organization, or site.'}],
-    [{key:'location',     label:'Location',             ph:'Anytown, AS'}],
-    ...COCREATOR_ROW.map(f => [f]),
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...descriptionRow(),
   ],
   press: [
-    [{key:'title',       label:'Article / Review Title', ph:'New Approaches to Common Themes', help:'Title of the review, interview, or essay — not the publication.'}],
+    [{key:'title',       label:'Article / Review Title', ph:'New Approaches to Common Themes', help:'Title of the review, interview, or essay, not the publication.'}],
     [
       {key:'publication', label:'Publication',  ph:'Framework Monthly', help:'Newspaper, magazine, catalog, or journal.'},
       {key:'year',        label:'Year',         ph:'2025', w:'6.5rem'},
     ],
     [{key:'author', label:'Author (optional)', ph:'Javier Mendoza', help:'Include if the piece is a signed review or essay.'}],
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...descriptionRow(),
   ],
   teaching: [
     [{key:'role', label:'Role / Title', ph:'Adjunct Lecturer', help:'E.g. Visiting Artist, Adjunct Lecturer, Workshop Leader.'}],
     [{key:'year', label:'Year', ph:'2024', w:'6.5rem', help:'Year or range, e.g. 2022\u20132024.'}],
     [{key:'institution', label:'Institution / Venue', ph:'Stonehaven College of Art and Craft'}],
     [{key:'location',    label:'Location',            ph:'Anytown, AS'}],
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...descriptionRow(),
   ],
   works_in_progress: [
     [{key:'title', label:'Work Title', ph:'Field Notes for a Vanishing Shore'}],
     [{key:'year',  label:'Projected Completion', ph:'2027', w:'10.5rem', help:'Use a year, e.g. 2027. Keep it short so it fits the date column.'}],
-    [{key:'description', label:'Brief Description', rows: 2,
-      ph:'A feature documentary about the last commercial fishing families on the lake. Currently in post-production.'}],
+    [{key:'description', label:'Brief Description', rows: 2, ph: SAMPLE_WIP}],
   ],
   selected_writing: [
     [
@@ -619,17 +664,17 @@ const FIELD_CONFIG = {
       {key:'year',  label:'Year',  ph:'2025', w:'6.5rem'},
     ],
     [{key:'publication', label:'Publication / Outlet', ph:'Framework Monthly', help:'Journal, magazine, exhibition catalog, or website.'}],
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...descriptionRow(),
   ],
   other_experience: [
     [
       {key:'title', label:'Work / Production Title', ph:'The Winter Suite'},
       {key:'year',  label:'Year',                    ph:'2023', w:'6.5rem'},
     ],
-    [{key:'role',         label:'Your Role',              ph:'Dancer', help:'E.g. Dancer, Cellist, Editor, Actor, Production Assistant.'}],
+    [{key:'role',         label:'Your Role',              ph:'Dancer', help:'E.g. Dancer, Musician, Editor, Actor, Curator.'}],
     [{key:'organization', label:'Company / Organization', ph:'Northline Dance Company', help:'Company, ensemble, production, or employer. Include the director or choreographer if relevant.'}],
     [{key:'location',     label:'Location',               ph:'Anytown, AS'}],
-    ...DESCRIPTION_ROW.map(f => [f]),
+    ...descriptionRow(),
   ],
   additional_info: [
     [{key:'header',  label:'Section Header', ph:'Languages, Affiliations, Community Work...', help:'This will appear as the section title in your CV.'}],
@@ -989,6 +1034,9 @@ function renderCV() {
     cvSectionHTML('performances', 'Performances & Productions', d.performances, e => ({
       year: e.year, main: e.title, sub: [e.role, e.venue, e.location, e.duration].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
     })),
+    cvSectionHTML('albums', 'Albums', d.albums, e => ({
+      year: e.year, main: e.title, sub: [e.role, e.format, e.duration, e.label].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
+    })),
     // Film
     cvSectionHTML('screenings', 'Completed Films', d.screenings, e => ({
       year: e.year, main: e.title,
@@ -1003,10 +1051,6 @@ function renderCV() {
     cvSectionHTML('readings', 'Readings', d.readings, e => ({
       year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), desc: e.description,
     })),
-    // Music
-    cvSectionHTML('albums', 'Albums', d.albums, e => ({
-      year: e.year, main: e.title, sub: [e.role, e.format, e.duration, e.label].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-    })),
     // Visual Arts & Tech-Centered Art
     cvSectionHTML('solo', 'Solo Exhibitions', d.solo, e => ({
       year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
@@ -1017,10 +1061,10 @@ function renderCV() {
     cvSectionHTML('public_projects', 'Public Projects', d.public_projects, e => ({
       year: e.year, main: e.title, sub: [e.organization, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
     })),
-    // Other
-    cvSectionHTML('commissions', 'Commissions', d.commissions, e => ({
-      year: e.year, main: e.title, sub: [e.commissioner, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
+    cvSectionHTML('collections', 'Collections', d.collections, e => ({
+      year: e.year, main: e.title, sub: [e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
     })),
+    // Other
     cvSectionHTML('works_in_progress', 'Works in Progress', d.works_in_progress, e => ({
       year: e.year, main: e.title, sub: e.description,
     })),
@@ -1028,19 +1072,19 @@ function renderCV() {
       year: e.year, main: e.name, sub: e.organization, desc: e.description,
     })),
     cvSectionHTML('residencies', 'Residencies', d.residencies, e => ({
-      year: e.year, main: e.name, sub: e.location, desc: e.description,
+      year: e.year, main: e.name, sub: [e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
     })),
-    cvSectionHTML('teaching', 'Teaching, Lectures & Other Experiences', d.teaching, e => ({
+    cvSectionHTML('teaching', 'Teaching & Lectures', d.teaching, e => ({
       year: e.year, main: e.role, sub: [e.institution, e.location].filter(Boolean).join(', '), desc: e.description,
+    })),
+    cvSectionHTML('other_experience', 'Other Professional Artistic Experience', d.other_experience, e => ({
+      year: e.year, main: e.title, sub: [e.role, e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
     })),
     cvSectionHTML('press', 'Press & Reviews', d.press, e => ({
       year: e.year, main: e.title, sub: [e.publication, e.author ? `by ${e.author}` : ''].filter(Boolean).join(', '), desc: e.description,
     })),
     cvSectionHTML('selected_writing', 'Selected Writing', d.selected_writing, e => ({
       year: e.year, main: e.title, sub: e.publication, desc: e.description,
-    })),
-    cvSectionHTML('other_experience', 'Other Artistic Experience', d.other_experience, e => ({
-      year: e.year, main: e.title, sub: [e.role, e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
     })),
     ...(state.enabled['additional_info'] ? (d.additional_info || []).filter(e => e.header || e.content).map(e => {
       const lines = (e.content || '').trim().split('\n').map(l => parseMarkdown(l)).join('<br>');
@@ -1246,6 +1290,9 @@ function cvToPlainText() {
   addSection('performances', 'Performances & Productions', d.performances, e => ({
     year: e.year, main: e.title, sub: [e.role, e.venue, e.location, e.duration].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
   }));
+  addSection('albums', 'Albums', d.albums, e => ({
+    year: e.year, main: e.title, sub: [e.role, e.format, e.duration, e.label].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
+  }));
   addSection('screenings', 'Completed Films', d.screenings, e => ({
     year: e.year, main: e.title, sub: [e.role, e.duration].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
   }));
@@ -1254,9 +1301,6 @@ function cvToPlainText() {
   }));
   addSection('readings', 'Readings', d.readings, e => ({
     year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), desc: e.description,
-  }));
-  addSection('albums', 'Albums', d.albums, e => ({
-    year: e.year, main: e.title, sub: [e.role, e.format, e.duration, e.label].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
   }));
   addSection('solo', 'Solo Exhibitions', d.solo, e => ({
     year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
@@ -1267,8 +1311,8 @@ function cvToPlainText() {
   addSection('public_projects', 'Public Projects', d.public_projects, e => ({
     year: e.year, main: e.title, sub: [e.organization, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
   }));
-  addSection('commissions', 'Commissions', d.commissions, e => ({
-    year: e.year, main: e.title, sub: [e.commissioner, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
+  addSection('collections', 'Collections', d.collections, e => ({
+    year: e.year, main: e.title, sub: [e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
   }));
 
   addSection('works_in_progress', 'Works in Progress', d.works_in_progress, e => ({
@@ -1278,19 +1322,19 @@ function cvToPlainText() {
     year: e.year, main: e.name, sub: e.organization, desc: e.description,
   }));
   addSection('residencies', 'Residencies', d.residencies, e => ({
-    year: e.year, main: e.name, sub: e.location, desc: e.description,
+    year: e.year, main: e.name, sub: [e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
   }));
-  addSection('teaching', 'Teaching, Lectures & Other Experiences', d.teaching, e => ({
+  addSection('teaching', 'Teaching & Lectures', d.teaching, e => ({
     year: e.year, main: e.role, sub: [e.institution, e.location].filter(Boolean).join(', '), desc: e.description,
+  }));
+  addSection('other_experience', 'Other Professional Artistic Experience', d.other_experience, e => ({
+    year: e.year, main: e.title, sub: [e.role, e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
   }));
   addSection('press', 'Press & Reviews', d.press, e => ({
     year: e.year, main: e.title, sub: [e.publication, e.author ? `by ${e.author}` : ''].filter(Boolean).join(', '), desc: e.description,
   }));
   addSection('selected_writing', 'Selected Writing', d.selected_writing, e => ({
     year: e.year, main: e.title, sub: e.publication, desc: e.description,
-  }));
-  addSection('other_experience', 'Other Artistic Experience', d.other_experience, e => ({
-    year: e.year, main: e.title, sub: [e.role, e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
   }));
 
   if (state.enabled['additional_info']) {

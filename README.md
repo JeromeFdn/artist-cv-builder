@@ -8,9 +8,10 @@ ABOUT THIS TOOL
 The Artist CV Builder is a free, browser-based tool that helps
 artists create a polished, print-ready CV. It supports a wide
 range of artistic fields and multidisciplinary practices, with
-sections grouped by discipline: performing arts, film,
-literature, and visual and tech-centered art. Artists turn on
-only the sections that apply to their work.
+sections grouped by Jerome Foundation's seven artistic fields:
+dance; film; literature; music; technology centered art;
+theater, performance and spoken word; and visual art. Artists
+fill in only the sections that apply to their work.
 
 The tool is a single self-contained HTML file (index.html) with
 no backend, no database, and no external dependencies beyond
@@ -39,41 +40,67 @@ HOW TO USE
 1. Visit the live tool URL:
    https://jeromefdn.github.io/artist-cv-builder
 
-2. Fill in the form on the left. The CV preview on the right
-   updates in real time as you type. Work saves automatically;
-   the "Saved" indicator in the top bar confirms it.
+2. Fill in the form. The CV preview updates as you type. Work
+   saves automatically in the browser; the status in the top
+   bar confirms it.
 
-3. Use the section navigation to move between sections.
-   Sections with a green dot are included in the CV output.
-   Toggle sections on or off using the checkbox at the top
-   of each section form.
+3. Use the section list to move between sections. It is
+   grouped by Jerome Foundation's seven artistic fields, each
+   with its own sections and examples, plus General and Other.
+   Field groups start folded; artists open the ones they work
+   in. Dance, Music, and Theater each print as a separate
+   section. Artists whose saved CV predates that split see a
+   "Move this entry to" menu so they can sort old entries into
+   Dance or Music; nobody else sees it. A number shows how many entries are in the CV; "hidden"
+   means the section has content but is switched off. Blank
+   sections never print.
 
-4. Within a section, use "+ Add Entry" for additional entries,
-   and the up and down arrows on each entry to reorder them.
+4. Within a section, use "+ Add another entry," the up and
+   down arrows to reorder entries, or "Sort newest first."
+   Education accepts optional start and end months.
 
-5. Choose a sans-serif or serif CV font in the Contact section.
-   The *B* button in the top bar explains the simple formatting
-   marks available for italics and bold.
+5. "Arrange your CV" (pinned under the section list) sets the
+   order sections print in and the typeface. A writer who has
+   also made films can move Published Works above Completed
+   Films there.
 
-6. When ready, click "Print / Save PDF" and follow the
-   on-screen instructions to save a clean PDF. "Copy Text"
-   copies a plain-text version of the CV to the clipboard for
-   pasting into an application form or email.
+6. "Save as PDF or print" walks through the print settings.
+   "Copy text" copies a plain-text version for pasting into an
+   application form or email.
 
-7. "Clear Form" erases everything and cannot be undone.
+7. "Back up or reset" downloads a backup file, loads one, or
+   clears the form. Loading and clearing can be undone until
+   the notice is dismissed.
+
+8. If someone closes the page with edits they have not yet
+   saved to PDF, copied, or backed up, the browser asks them
+   to confirm. Browsers do not let a page set the wording of
+   that prompt, so the tool shows its own reminder on the page
+   behind it. To limit the prompt to real save failures, set
+   WARN_ON_LEAVE to 'unsaved' near the top of the script.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ACCESSIBILITY
 
-This tool is built to meet WCAG 2.0 AA accessibility standards,
-including:
+This tool targets WCAG 2.2 AA. As of November 2026 it passes
+the automated axe-core checks for that level on every screen
+and dialog. Automated checks catch only part of what matters,
+so a pass with a screen reader is still worth doing after any
+change. What is built in:
 
-  - All form inputs have explicit label associations
-  - All text meets minimum contrast ratios
-  - Font sizes scale with browser text zoom settings
-  - Keyboard navigation is fully supported
-  - Screen reader announcements for live CV preview updates
-  - Focus is managed after dynamic form changes
-  - Skip link provided for keyboard users
+  - Every input has a visible, associated label
+  - Text contrast of at least 4.5:1; control borders and focus
+    rings at least 3:1
+  - Text follows the reader's browser font size and zoom
+  - Below about 960px, or at high zoom, the page becomes one
+    column and scrolls normally
+  - Everything works from the keyboard; reordering uses
+    buttons, never dragging
+  - Dialogs trap focus and return it when closed
+  - Adding, moving, sorting, and removing are announced to
+    screen readers; the preview itself is not read out on
+    every keystroke
+  - The PDF is tagged with real headings (name as heading 1,
+    sections as heading 2)
 
 Example text shown in gray inside a field is a sample, not
 saved content, and it disappears as soon as the artist types.
@@ -103,16 +130,36 @@ TECHNICAL NOTES
 
   - Built with plain HTML, CSS, and JavaScript. No frameworks,
     no build tools, no dependencies.
-  - Web fonts loaded from Google Fonts (Barlow, Barlow
-    Condensed, and Lora for the serif CV option).
+  - Web fonts loaded from Google Fonts: Figtree for the tool
+    and the sans-serif CV, Lora for the serif CV. Figtree
+    replaced Barlow in November 2026; it runs a little wider,
+    so a CV made before then may break lines differently.
+  - Section-list icons are from Lucide (lucide.dev), ISC
+    License, inlined as SVG. The Dance icon is Jerome
+    Foundation's own.
+  - Which section groups are folded shut is remembered under a
+    separate key, "jerome_artist_cv_ui", apart from the CV.
   - User progress is saved to browser localStorage under the
-    key "jerome_artist_cv_v3".
-  - Section order is defined in three places that must stay in
-    agreement: the nav grouping in SECTION_META, the preview in
-    renderCV(), and the plain-text export in cvToPlainText().
+    key "jerome_artist_cv_v3". The November 2026 update only
+    adds to that data (education months, section order). The
+    first time it runs it leaves a one-time copy of the
+    existing save under "jerome_artist_cv_v3_before_2026_11".
+  - Field keys in FIELD_CONFIG are the saved data keys. Labels
+    can change freely; renaming a key hides what artists have
+    saved under it.
+  - Before November 2026, dance, music, and theater shared one
+    "Performances & Productions" list (key "performances").
+    That key is now the Theater section, and existing entries
+    stay in it and print as before until the artist moves them.
+    Dance ("dance_works"), music ("music_works"), and
+    technology centered art ("tech_works",
+    "tech_exhibitions") are new keys.
+    Saves without a section order keep the old print order.
+  - Section order lives in DEFAULT_ORDER and the artist's saved
+    order. ENTRY_MAP defines how each section's entries print,
+    and the preview and plain-text copy both read from it.
   - Print output uses a CSS @page margin box for page numbers.
-    Current browsers ignore this rule, so printed pages are
-    unnumbered until that support arrives.
+    Chrome and Edge support it; other browsers may not.
   - Hosted via GitHub Pages (static file hosting).
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Last updated: August 27, 2026
+Last updated: November 13, 2026

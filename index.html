@@ -5,317 +5,279 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Artist CV Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
 <style>
 /*
-  WCAG 2.0 AA compliant:
-  - All inputs have explicit <label for="id"> (1.3.1 / 4.1.2)
-  - All text ≥ 4.5:1 contrast; large/bold text ≥ 3:1 (1.4.3)
-  - Font sizes in rem (1.4.4)
-  - Visible focus indicators on all interactive elements (2.4.7)
-  - aria-live on CV preview (4.1.3)
-  - Focus managed after add/remove (2.4.3)
-  - Skip link present (2.4.1)
-  - Semantic heading hierarchy (1.3.1)
-  - aria-current on active nav item (4.1.2)
-  - Toggle uses real checkbox with label (4.1.2)
+  Accessibility target: WCAG 2.2 AA.
+  - Every control has a visible, programmatic label (1.3.1, 3.3.2, 4.1.2)
+  - Text is at least 4.5:1; control borders and focus rings at least 3:1 (1.4.3, 1.4.11)
+  - Sizes are in rem and follow the reader's browser font setting (1.4.4)
+  - Below 60em the page is one column and scrolls normally (1.4.10)
+  - Nothing relies on color alone or on dragging (1.4.1, 2.5.7)
+  - Buttons are at least 24px in each direction (2.5.8)
+  - Dialogs are native <dialog>, so focus is trapped and returned (2.4.3)
+  - Changes are announced through one polite status region (4.1.3)
 */
+:root {
+  --ink: #000;
+  --muted: #4a5557;
+  --placeholder: #667073;
+  --teal: #007c89;
+  --teal-dark: #005f69;
+  --teal-tint: #e3f2f4;
+  --teal-wash: #f4fafa;
+  --crimson-dark: #b80337;
+  --line: #d3dcde;
+  --control: #7b888a;
+  --bg: #edf4f5;
+  --paper: #fff;
+  --radius: 0.375rem;
+  --ui: 'Figtree', 'Segoe UI', Arial, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 100%; }
+body { margin: 0; font-family: var(--ui); color: var(--ink); background: var(--bg); line-height: 1.5; }
+h1, h2, h3, p, ol, ul { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--teal-dark); outline-offset: 2px; }
+[hidden] { display: none !important; }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; }
-body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; background: #f0f0f0; color: #000; }
-#app { display: flex; flex-direction: column; height: 100vh; }
-
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
 .skip-link {
-  position: absolute; top: -999px; left: 0; z-index: 1000;
-  background: #fff; color: #000; padding: 0.5rem 1rem; font-size: 0.875rem;
-  border: 2px solid #000; text-decoration: none; font-weight: 600;
+  position: absolute; top: -999px; left: 0.5rem; z-index: 1000;
+  background: #fff; color: #000; padding: 0.5rem 1rem; border: 2px solid #000;
+  border-radius: var(--radius); font-weight: 600;
 }
-.skip-link:focus { top: 0; }
+.skip-link:focus { top: 0.5rem; }
 
-/* ── Toolbar ─────────────────────────────────────────────────── */
-.toolbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 1.25rem; height: 3.125rem;
-  background: #000; color: #fff; flex-shrink: 0;
+/* ── Top bar ─────────────────────────────────────────────────── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 1.5rem; flex-wrap: wrap;
+  padding: 0.75rem 1.25rem; background: #fff; flex-shrink: 0;
 }
-.t-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700; font-size: 1.25rem; letter-spacing: .1em; text-transform: uppercase;
-}
-.t-sub { font-size: 0.8125rem; color: #999; margin-left: 0.75rem; }
-.toolbar-actions { display: flex; gap: 0.5rem; align-items: center; }
+.brand-stripe { height: 0.25rem; flex-shrink: 0; background: var(--teal); }
+.app-title { font-size: 1.375rem; font-weight: 600; line-height: 1.2; }
+.app-sub { font-size: 0.875rem; color: var(--muted); }
+.actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.save-badge { font-size: 0.875rem; color: var(--muted); margin-right: 0.5rem; }
+.save-badge.failed { color: var(--crimson-dark); font-weight: 600; }
 
-/* Print: primary action — white bg, black text */
-.print-btn {
-  background: #fff; color: #000; border: none; padding: 0.4375rem 1rem;
-  font-family: 'Barlow', sans-serif; font-size: 0.875rem; font-weight: 600;
-  letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: background .15s;
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.5rem;
+  padding: 0.375rem 1.0625rem; border-radius: 62.5rem; border: 1px solid transparent;
+  font-size: 0.9375rem; font-weight: 600; cursor: pointer; background: none; text-decoration: none;
 }
-.print-btn:hover { background: #ddd; }
-.print-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--teal-dark); }
+.btn-secondary { background: #fff; color: var(--teal-dark); border-color: var(--teal); }
+.btn-secondary:hover { background: var(--teal-tint); }
+.btn-quiet { color: var(--teal-dark); }
+.btn-quiet:hover { background: var(--teal-tint); }
+.btn-danger { background: #fff; color: var(--crimson-dark); border-color: var(--crimson-dark); }
+.btn-danger:hover { background: #fdecf1; }
+.btn-small { min-height: 2rem; padding: 0.125rem 0.625rem; font-size: 0.875rem; }
+.btn:disabled { opacity: .4; cursor: default; }
 
-/* Clear / Copy: secondary actions — outlined in gray on black bar */
-.clear-btn {
-  background: transparent; color: #bbb; border: 1px solid #555; padding: 0.375rem 0.875rem;
-  font-family: 'Barlow', sans-serif; font-size: 0.875rem; font-weight: 500;
-  letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .15s;
+/* ── Notice bar ──────────────────────────────────────────────── */
+.notice {
+  display: flex; align-items: center; gap: 0.5rem 1rem; flex-wrap: wrap; flex-shrink: 0;
+  padding: 0.625rem 1.25rem; background: #fff8d9; border-bottom: 1px solid #d9c56a; font-size: 0.9375rem;
 }
-.clear-btn:hover { color: #fff; border-color: #999; }
-.clear-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-.copy-btn {
-  background: transparent; color: #bbb; border: 1px solid #555; padding: 0.375rem 0.875rem;
-  font-family: 'Barlow', sans-serif; font-size: 0.875rem; font-weight: 500;
-  letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .15s;
-}
-.copy-btn:hover { color: #fff; border-color: #999; }
-.copy-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-.copy-btn.copied { color: #7acf90; border-color: #7acf90; }
+.notice.warn { background: #fdecf1; border-bottom-color: var(--crimson-dark); }
+.notice p { flex: 1 1 20rem; }
+.notice-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
-/* ── Font choice buttons ─────────────────────────────────────── */
-.font-choice-btn {
-  background: transparent; color: #ccc; border: 1px solid #555;
-  padding: 0.25rem 0.75rem; font-family: 'Barlow', sans-serif;
-  font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all .15s;
-}
-.font-choice-btn:hover { border-color: #999; color: #fff; }
-.font-choice-btn.active { background: #fff; color: #000; border-color: #fff; }
-.font-choice-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-.save-badge { font-size: 0.75rem; color: #999; letter-spacing: .04em; transition: color .3s; }
-.save-badge.saved { color: #7acf90; }
+/* ── Layout ──────────────────────────────────────────────────── */
+.section-nav { background: #fff; border-right: 1px solid var(--line); }
+.form-content { background: #fff; padding: 1.5rem 1.375rem 3rem; }
+.form-content:focus { outline: none; }
+.preview-panel { padding: 1.25rem; }
+.preview-label { font-size: 0.875rem; font-weight: 600; color: var(--muted); max-width: 41.25rem; margin: 0 auto 0.5rem; }
 
-/* ── Main layout ─────────────────────────────────────────────── */
-.main { display: flex; flex: 1; overflow: hidden; }
-.form-panel { width: 42%; display: flex; flex-shrink: 0; border-right: 1px solid #ccc; overflow: hidden; }
+@media (min-width: 60.01em) {
+  body { height: 100vh; overflow: hidden; }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+  .main { flex: 1; min-height: 0; display: grid; grid-template-columns: 16.5rem minmax(22rem, 1fr) minmax(0, 1.3fr); }
+  .form-content, .preview-panel, .nav-list { overflow-y: auto; }
+  .section-nav { display: flex; flex-direction: column; min-height: 0; }
+  .nav-list { flex: 1; min-height: 0; }
+  .form-content { border-right: 1px solid var(--line); }
+  .section-nav .nav-compact { display: none; }
+}
+@media (max-width: 60em) {
+  .nav-list, .nav-pinned { display: none; }
+  .section-nav { border-right: 0; border-bottom: 1px solid var(--line); }
+  .preview-panel { padding: 1rem 0.75rem 2rem; }
+  .cv-doc { padding: 2rem 1.25rem 2.5rem !important; min-height: 0 !important; }
+}
 
 /* ── Section nav ─────────────────────────────────────────────── */
-.section-nav { width: 10.5rem; background: #007c89; padding: 0.75rem 0; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #006070; }
-.nav-section-group { margin-bottom: 0.25rem; }
-.nav-group-label {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 0.8125rem; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase; color: #fff;
-  padding: 0.5rem 0.875rem 0.25rem; display: block;
+/* Icons are from Lucide (lucide.dev), ISC License. */
+.nav-list { padding: 0.75rem 0.625rem; }
+.nav-key { font-size: 0.8125rem; color: var(--muted); padding: 0 0.5rem 0.625rem; }
+.nav-group { border-top: 1px solid var(--line); padding: 0.375rem 0; }
+.nav-group:first-of-type { border-top: 0; padding-top: 0; }
+.nav-group summary {
+  display: flex; align-items: center; gap: 0.625rem; list-style: none; cursor: pointer;
+  padding: 0.375rem 0.5rem; border-radius: 0.625rem; min-height: 2.75rem;
 }
+.nav-group summary::-webkit-details-marker { display: none; }
+.nav-group summary:hover { background: var(--teal-wash); }
+.nav-icon {
+  flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 0.5rem; background: var(--teal-tint); color: var(--teal-dark);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.nav-icon svg, .nav-chevron, .nav-check svg { width: 1.125rem; height: 1.125rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nav-group-text { flex: 1; min-width: 0; line-height: 1.25; }
+.nav-group-name { display: block; font-size: 0.9375rem; font-weight: 700; }
+.nav-group-sub { display: block; font-size: 0.8125rem; color: var(--muted); }
+.nav-group-count { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
+.nav-group[open] .nav-group-count { display: none; }
+.nav-chevron { flex-shrink: 0; color: var(--muted); }
+.nav-group[open] .nav-chevron { transform: rotate(180deg); }
+.nav-items { list-style: none; margin: 0.125rem 0 0.25rem; padding: 0 0 0 1.5rem; }
 .nav-btn {
-  display: flex; align-items: center; justify-content: space-between;
-  width: 100%; text-align: left; background: none;
-  border: none; border-left: 0.125rem solid transparent;
-  color: #fff; padding: 0.5rem 0.875rem;
-  font-family: 'Barlow', sans-serif; font-size: 0.875rem; font-weight: 400;
-  cursor: pointer; letter-spacing: .02em; transition: color .15s, background .15s;
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: 100%; text-align: left;
+  background: none; border: 0; border-radius: 0.625rem; min-height: 2.25rem;
+  padding: 0.375rem 0.5rem 0.375rem 0.75rem; font-size: 0.9375rem; line-height: 1.3; cursor: pointer;
 }
-.nav-btn:hover { background: rgba(0,0,0,.15); }
-.nav-btn:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
-.nav-btn.active { background: rgba(0,0,0,.2); font-weight: 600; border-left-color: #fff; }
-/* Nav dot */
-.nav-dot {
-  width: 0.375rem; height: 0.375rem; border-radius: 50%; flex-shrink: 0; margin-left: 0.375rem;
-  display: none; transition: background .2s;
+.nav-btn:hover { background: var(--teal-tint); }
+.nav-btn.active { background: var(--teal-dark); color: #fff; font-weight: 600; }
+.nav-count {
+  flex-shrink: 0; min-width: 1.5rem; height: 1.5rem; padding: 0 0.4375rem; border-radius: 62.5rem;
+  background: var(--teal-tint); color: var(--teal-dark); font-size: 0.8125rem; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
 }
-.nav-dot.on  { display: block; background: #7acf90; border: 1px solid #7acf90; }
-.nav-dot.off { display: block; background: rgba(255,255,255,.4); border: 1px solid rgba(255,255,255,.4); }
+.nav-check { padding: 0; }
+.nav-check svg { width: 0.875rem; height: 0.875rem; stroke-width: 3; }
+.nav-btn.active .nav-count { background: #fff; }
+.nav-hidden { flex-shrink: 0; font-size: 0.8125rem; color: var(--muted); border: 1px solid var(--control); border-radius: 62.5rem; padding: 0 0.5rem; background: #fff; }
+.nav-pinned { background: #fff; border-top: 1px solid var(--line); padding: 0.5rem 0.625rem; flex-shrink: 0; }
+.nav-direct { border-top: 1px solid var(--line); padding: 0.375rem 0; }
+.nav-head-btn { justify-content: flex-start; gap: 0.625rem; font-weight: 700; padding-left: 0.5rem; min-height: 2.75rem; }
+.nav-head-name { flex: 1; }
+.nav-head-btn.active .nav-icon { background: #fff; }
+.nav-compact { display: flex; align-items: end; gap: 0.75rem; flex-wrap: wrap; padding: 0.75rem 1rem; }
+.nav-compact .field-wrap { flex: 1 1 14rem; }
 
-/* ── Form content ────────────────────────────────────────────── */
-.form-content { flex: 1; background: #fff; padding: 1.375rem 1.125rem; overflow-y: auto; }
-.f-title {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 0.875rem; font-weight: 700;
-  letter-spacing: .14em; text-transform: uppercase; color: #000;
-  margin-bottom: 0.75rem; padding-bottom: 0.4375rem; border-bottom: 0.125rem solid #000;
-}
-.f-tip { font-size: 0.875rem; color: #555; margin-bottom: 1rem; line-height: 1.5; font-style: italic; }
+/* ── Form ────────────────────────────────────────────────────── */
+.f-title { font-size: 1.5rem; font-weight: 600; line-height: 1.25; margin-bottom: 0.5rem; }
+.f-title:focus { outline: none; }
+.f-sub { font-size: 1.0625rem; font-weight: 600; margin: 1.75rem 0 0.5rem; }
+.f-tip { font-size: 0.9375rem; color: var(--muted); margin-bottom: 1rem; max-width: 38rem; }
 
-/* ── Section toggle ──────────────────────────────────────────── */
-.section-toggle-row {
-  display: flex; align-items: center; gap: 0.625rem;
-  margin-bottom: 1rem; padding: 0.625rem 0.75rem;
-  background: #f5f5f5; border: 1px solid #ddd;
+.toggle-row {
+  display: flex; align-items: center; gap: 0.625rem; flex-wrap: wrap; margin-bottom: 1rem;
+  padding: 0.625rem 0.75rem; background: var(--teal-wash); border: 1px solid var(--line); border-radius: var(--radius);
 }
-.toggle-cb { width: 1rem; height: 1rem; cursor: pointer; accent-color: #007c89; }
-.toggle-label-text { font-size: 0.875rem; font-weight: 500; color: #000; cursor: pointer; user-select: none; }
-.toggle-label-text.off { color: #555; }
-.toggle-hint { font-size: 0.75rem; color: #555; margin-left: auto; font-style: italic; }
+.toggle-cb, .radio-row input { width: 1.25rem; height: 1.25rem; accent-color: var(--teal); cursor: pointer; flex-shrink: 0; margin: 0; }
+.toggle-label { font-size: 0.9375rem; font-weight: 600; cursor: pointer; }
+.toggle-note { font-size: 0.875rem; color: var(--muted); flex-basis: 100%; }
 
-/* ── Field styles ────────────────────────────────────────────── */
-.field-row { display: flex; gap: 0.625rem; margin-bottom: 0.6875rem; }
-.field-wrap { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.field-label { font-size: 0.8125rem; font-weight: 600; color: #333; margin-bottom: 0.1875rem; letter-spacing: .05em; text-transform: uppercase; }
-.field-input {
-  width: 100%; border: 1px solid #bbb; padding: 0.5rem 0.625rem;
-  font-family: 'Barlow', sans-serif; font-size: 1rem; color: #000;
-  background: #fff; outline: none; transition: border-color .15s;
+.field-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.875rem; }
+.field-wrap { display: flex; flex-direction: column; flex: 1 1 12rem; min-width: 0; }
+.field-label { font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.25rem; }
+.field-input, .field-textarea, .field-select {
+  width: 100%; border: 1px solid var(--control); border-radius: var(--radius);
+  padding: 0.5rem 0.625rem; font-size: 1rem; background: #fff; min-height: 2.5rem;
 }
-.field-input:hover { border-color: #555; }
-.field-input:focus { border-color: #000; box-shadow: 0 0 0 3px rgba(0,0,0,.12); }
-.field-input::placeholder { color: #767676; }
-.field-help { font-size: 0.8125rem; color: #767676; margin-top: 0.25rem; line-height: 1.4; font-style: italic; }
-.field-textarea {
-  width: 100%; border: 1px solid #bbb; padding: 0.5rem 0.625rem;
-  font-family: 'Barlow', sans-serif; font-size: 1rem; color: #000;
-  background: #fff; outline: none; transition: border-color .15s;
-  resize: vertical; min-height: 8rem; line-height: 1.6;
-}
-.field-textarea:hover { border-color: #555; }
-.field-textarea:focus { border-color: #000; box-shadow: 0 0 0 3px rgba(0,0,0,.12); }
-.field-textarea::placeholder { color: #767676; }
+.field-textarea { resize: vertical; line-height: 1.5; }
+.field-input:hover, .field-textarea:hover, .field-select:hover { border-color: #000; }
+.field-input:focus-visible, .field-textarea:focus-visible, .field-select:focus-visible { outline-offset: 0; border-color: var(--teal-dark); }
+.field-input::placeholder, .field-textarea::placeholder { color: var(--placeholder); opacity: 1; }
+.field-help { font-size: 0.875rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.4; }
 
-/* ── Entry cards ─────────────────────────────────────────────── */
-.entry-card { border: 1px solid #ddd; padding: 0.75rem; margin-bottom: 0.625rem; background: #f5f5f5; }
-.entry-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.625rem; }
-.entry-num { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8125rem; font-weight: 700; color: #555; letter-spacing: .1em; text-transform: uppercase; }
-.entry-hdr-actions { display: flex; gap: 0.25rem; align-items: center; }
-.reorder-btn {
-  background: none; border: 1px solid #bbb; color: #555;
-  padding: 0.125rem 0.4rem; font-size: 0.75rem; cursor: pointer; line-height: 1;
-  font-family: 'Barlow', sans-serif; transition: all .15s;
-}
-.reorder-btn:hover:not(:disabled) { border-color: #000; color: #000; background: #eee; }
-.reorder-btn:disabled { opacity: 0.3; cursor: default; }
-.reorder-btn:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
-.rm-btn {
-  background: none; border: 1px solid #bbb; color: #333;
-  padding: 0.125rem 0.5rem; font-size: 0.875rem; cursor: pointer;
-  font-family: 'Barlow', sans-serif; transition: all .15s;
-}
-.rm-btn:hover { border-color: #000; color: #000; background: #eee; }
-.rm-btn:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
-.cocreator-row .field-input { background: #f0faf5; }
-.add-btn {
-  width: 100%; background: #000; border: none; color: #fff; padding: 0.5625rem;
-  font-family: 'Barlow Condensed', sans-serif; font-size: 0.9375rem; font-weight: 700;
-  letter-spacing: .12em; text-transform: uppercase; cursor: pointer; margin-top: 0.125rem; transition: background .15s;
-}
-.add-btn:hover { background: #333; }
-.add-btn:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
+.list-tools { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+.entry-card { border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.875rem 0.875rem 0.125rem; margin-bottom: 0.75rem; background: var(--teal-wash); }
+.entry-hdr { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.625rem; }
+.entry-num { font-size: 0.875rem; font-weight: 600; color: var(--muted); }
+.entry-hdr-actions { display: flex; gap: 0.375rem; align-items: center; }
+.icon-btn { min-width: 2rem; padding-left: 0.25rem; padding-right: 0.25rem; border-radius: var(--radius); }
+.add-btn { width: 100%; margin-top: 0.25rem; }
+.move-row { display: flex; align-items: center; gap: 0.5rem 0.75rem; flex-wrap: wrap; border-top: 1px solid var(--line); padding: 0.625rem 0; font-size: 0.875rem; }
+.move-row label { font-weight: 600; }
+.move-row .field-select { flex: 1 1 12rem; width: auto; min-height: 2.25rem; padding: 0.25rem 0.5rem; font-size: 0.9375rem; }
+.info-note { display: flex; align-items: flex-start; gap: 0.75rem; background: #fff8d9; border: 1px solid #d9c56a; border-radius: var(--radius); padding: 0.625rem 0.75rem; margin-bottom: 1rem; font-size: 0.9375rem; }
+.info-note p { flex: 1; }
 
-/* ── Preview panel ───────────────────────────────────────────── */
-.preview-panel { flex: 1; background: #ddd; overflow-y: auto; padding: 1.75rem 1.25rem; }
+.order-list { list-style: none; padding: 0; counter-reset: order; margin-bottom: 0.75rem; }
+.order-item {
+  counter-increment: order; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.5rem 0.625rem 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--teal-wash); margin-bottom: 0.375rem; font-weight: 500;
+}
+.order-name::before { content: counter(order) ". "; color: var(--muted); font-weight: 400; }
+.radio-set { border: 0; padding: 0; margin: 0; }
+.radio-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3125rem 0; }
+.radio-row label { cursor: pointer; }
+.in-lora { font-family: 'Lora', Georgia, serif; }
+
+/* ── CV document ─────────────────────────────────────────────── */
 .cv-doc {
+  font-family: 'Figtree', 'Segoe UI', Arial, sans-serif; color: #000;
   background: #fff; max-width: 41.25rem; margin: 0 auto;
   padding: 3.25rem 3rem 4rem; min-height: 56.25rem;
-  box-shadow: 0 0.1875rem 1.75rem rgba(0,0,0,.15);
+  box-shadow: 0 0.125rem 1.25rem rgba(0, 60, 70, .14);
 }
-
-
-/* ── CV typography — base (sans default) ─────────────────────── */
-.cv-name { font-family: 'Barlow', sans-serif; font-size: 2.5rem; font-weight: 400; color: #000; letter-spacing: -.01em; line-height: 1; margin-bottom: 0.5rem; }
-.cv-name.empty { color: #767676; }
+.cv-doc.cv-serif { font-family: 'Lora', Georgia, serif; }
+.cv-name { font-size: 2.5rem; font-weight: 500; letter-spacing: -.01em; line-height: 1; margin-bottom: 0.5rem; }
+.cv-name.empty { color: var(--placeholder); }
 .cv-meta { margin-bottom: 1.75rem; }
-.cv-meta-line { display: block; font-size: 0.9375rem; color: #000; line-height: 1.65; }
-.cv-statement { font-size: 0.9375rem; color: #000; line-height: 1.5; margin: 1.25rem 0 1.75rem; }
+.cv-name + .cv-section { margin-top: 1.75rem; }
+.cv-meta-line { display: block; font-size: 0.9375rem; line-height: 1.65; }
+.cv-meta-line a { color: inherit; text-decoration: none; }
+.cv-statement { font-size: 0.9375rem; line-height: 1.5; margin: 1.25rem 0 1.75rem; }
 .cv-section { margin-bottom: 1.5rem; }
 .cv-sec-title {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 0.8125rem; font-weight: 700;
-  letter-spacing: .2em; text-transform: uppercase; color: #000;
+  font-family: 'Figtree', 'Segoe UI', Arial, sans-serif; font-size: 0.75rem; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase;
   margin-bottom: 0.5625rem; padding-bottom: 0.3125rem; border-bottom: 1px solid #000;
 }
-.cv-entries { display: grid; grid-template-columns: max-content 1fr; }
+/* --cv-date-w is measured in alignDates() so every section shares one date column */
+.cv-entries { display: grid; grid-template-columns: var(--cv-date-w, max-content) 1fr; }
 .cv-entry { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; gap: 0 1.25rem; margin-bottom: 0.4375rem; font-size: 0.9375rem; line-height: 1.55; }
 .cv-entry:last-child { margin-bottom: 0; }
-.cv-yr { color: #000; font-size: 0.875rem; font-weight: 500; padding-top: 0.0625rem; text-align: right; max-width: 5.5rem; overflow-wrap: break-word; }
-/* sections with no dates collapse the gutter entirely */
+.cv-yr { font-size: 0.875rem; font-weight: 500; padding-top: 0.0625rem; text-align: right; max-width: 6rem; overflow-wrap: break-word; }
+.cv-yr-line, .cv-yr-short { display: block; white-space: nowrap; }
+/* sections with no dates give the whole width to the text */
+.cv-entries:not(:has(.cv-yr:not(:empty))) { grid-template-columns: 0 1fr; }
 .cv-entries:not(:has(.cv-yr:not(:empty))) .cv-entry { column-gap: 0; }
-.cv-main { font-weight: 500; color: #000; }
-.cv-sub { color: #000; font-size: 0.875rem; }
-.cv-empty { font-size: 0.875rem; color: #767676; font-style: italic; }
-.cv-block { font-size: 0.9375rem; line-height: 1.55; color: #000; }
+.cv-main { font-weight: 500; }
+.cv-sub { font-size: 0.875rem; }
+.cv-block { font-size: 0.9375rem; line-height: 1.55; }
+.cv-serif .cv-name, .cv-serif .cv-yr { font-weight: 400; }
+.cv-serif .cv-main { font-weight: 600; }
 
-/* ── CV font: serif variant ──────────────────────────────────── */
-.cv-doc.cv-serif .cv-name { font-family: 'Lora', serif; font-weight: 400; letter-spacing: -.01em; }
-.cv-doc.cv-serif .cv-meta-line { font-family: 'Lora', serif; }
-.cv-doc.cv-serif .cv-entry { font-family: 'Lora', serif; }
-.cv-doc.cv-serif .cv-yr   { font-family: 'Lora', serif; font-weight: 400; }
-.cv-doc.cv-serif .cv-main { font-family: 'Lora', serif; font-weight: 600; }
-.cv-doc.cv-serif .cv-sub  { font-family: 'Lora', serif; font-weight: 400; }
-.cv-doc.cv-serif .cv-statement { font-family: 'Lora', serif; }
-
-.fmt-help-btn {
-  background: transparent; color: #bbb; border: 1px solid #555; padding: 0.375rem 0.75rem;
-  font-family: 'Barlow', sans-serif; font-size: 0.875rem; font-weight: 600;
-  font-style: italic; letter-spacing: .02em; cursor: pointer; transition: all .15s;
+/* ── Dialogs ─────────────────────────────────────────────────── */
+dialog {
+  border: 0; border-top: 0.25rem solid var(--teal); border-radius: 0.5rem; padding: 1.5rem 1.75rem;
+  width: min(32rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow-y: auto; color: var(--ink);
 }
-.fmt-help-btn:hover { color: #fff; border-color: #999; }
-.fmt-help-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-
-/* ── Formatting help modal ───────────────────────────────────── */
-.fmt-overlay {
-  display: none; position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,0,0,.7); align-items: center; justify-content: center;
-}
-.fmt-overlay.visible { display: flex; }
-.fmt-box {
-  background: #fff; padding: 1.75rem 2rem; max-width: 30rem; width: 90%;
-  border-top: 3px solid #000;
-}
-.fmt-box h2 {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase; color: #000; margin-bottom: 0.5rem;
-}
-.fmt-box p { font-size: 0.875rem; color: #555; margin-bottom: 1.25rem; line-height: 1.5; }
-.fmt-table { width: 100%; border-collapse: collapse; margin-bottom: 1.25rem; font-size: 0.875rem; }
-.fmt-table th {
-  text-align: left; font-size: 0.6875rem; font-weight: 700; letter-spacing: .08em;
-  text-transform: uppercase; color: #555; padding: 0 0 0.375rem; border-bottom: 1px solid #ddd;
-}
-.fmt-table td { padding: 0.5rem 0.5rem 0.5rem 0; border-bottom: 1px solid #f0f0f0; vertical-align: middle; color: #000; }
-.fmt-table td:first-child { font-family: monospace; font-size: 0.9375rem; color: #007c89; white-space: nowrap; padding-right: 1.5rem; }
-.fmt-table td:last-child em { font-style: italic; }
-.fmt-table td:last-child strong { font-weight: 700; }
-.fmt-note { font-size: 0.8125rem; color: #555; font-style: italic; margin-bottom: 1.25rem; line-height: 1.5; }
-.fmt-close {
-  background: #000; color: #fff; border: none; padding: 0.5rem 1.5rem;
-  font-family: 'Barlow', sans-serif; font-size: 0.9375rem; font-weight: 600;
-  cursor: pointer; transition: background .15s; width: 100%;
-}
-.fmt-close:hover { background: #333; }
-.fmt-close:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
-.print-tip-overlay {
-  display: none; position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,0,0,.7);
-  align-items: center; justify-content: center;
-}
-.print-tip-overlay.visible { display: flex; }
-.print-tip-box {
-  background: #fff; padding: 1.75rem 2rem; max-width: 28rem; width: 90%;
-  border-top: 3px solid #ea0546;
-}
-.print-tip-box h2 {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase; color: #000; margin-bottom: 1rem;
-}
-.print-tip-box ol {
-  font-size: 0.9375rem; line-height: 1.7; color: #000; padding-left: 1.25rem; margin-bottom: 1.25rem;
-}
-.print-tip-box li { margin-bottom: 0.375rem; }
-.print-tip-box li strong { font-weight: 600; }
-.print-tip-note {
-  font-size: 0.8125rem; color: #555; font-style: italic; margin-bottom: 1.25rem; line-height: 1.5;
-}
-.print-tip-actions { display: flex; gap: 0.75rem; }
-.print-tip-go {
-  background: #000; color: #fff; border: none; padding: 0.5rem 1.25rem;
-  font-family: 'Barlow', sans-serif; font-size: 0.9375rem; font-weight: 600;
-  cursor: pointer; transition: background .15s; flex: 1;
-}
-.print-tip-go:hover { background: #333; }
-.print-tip-go:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
-.print-tip-cancel {
-  background: none; color: #555; border: 1px solid #bbb; padding: 0.5rem 1.25rem;
-  font-family: 'Barlow', sans-serif; font-size: 0.9375rem; cursor: pointer; transition: all .15s;
-}
-.print-tip-cancel:hover { border-color: #000; color: #000; }
-.print-tip-cancel:focus-visible { outline: 3px solid #000; outline-offset: 2px; }
+dialog::backdrop { background: rgba(0, 30, 35, .6); }
+dialog h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem; }
+dialog h3 { font-size: 1rem; font-weight: 600; margin: 1.25rem 0 0.25rem; }
+dialog p, dialog li { font-size: 0.9375rem; }
+dialog p { margin-bottom: 0.75rem; }
+dialog ol { padding-left: 1.25rem; margin-bottom: 1rem; }
+dialog li { margin-bottom: 0.375rem; }
+.dialog-note { color: var(--muted); font-size: 0.875rem; }
+.dialog-actions { display: flex; gap: 0.625rem; flex-wrap: wrap; margin-top: 1.25rem; }
+.fmt-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.9375rem; }
+.fmt-table th { text-align: left; font-weight: 600; padding: 0 0 0.375rem; border-bottom: 1px solid var(--line); }
+.fmt-table td { padding: 0.5rem 0.5rem 0.5rem 0; border-bottom: 1px solid var(--line); }
+.fmt-table td:first-child, .fmt-code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--teal-dark); }
 
 /* ── Footer ──────────────────────────────────────────────────── */
-.site-footer {
-  background: #000; color: #999; flex-shrink: 0;
-  padding: 0.75rem 1.25rem;
-  font-size: 0.75rem; line-height: 1.6;
-  display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+.site-footer { background: #fff; border-top: 1px solid var(--line); color: var(--muted); flex-shrink: 0; padding: 0.625rem 1.25rem; font-size: 0.8125rem; }
+.site-footer a { color: var(--teal-dark); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .nav-chevron { transition: transform .15s; }
+  .btn, .field-input, .field-textarea, .field-select { transition: background-color .15s, border-color .15s; }
 }
-.site-footer a { color: #ccc; text-decoration: underline; }
-.site-footer a:hover { color: #fff; }
-.site-footer a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.footer-divider { color: #444; }
 
 /* ── Print ───────────────────────────────────────────────────── */
 @media print {
@@ -323,23 +285,19 @@ body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; backg
     margin: 0.75in;
     @bottom-right {
       content: var(--cv-name-prefix, "") "pg. " counter(page) " of " counter(pages);
-      font-family: 'Barlow', sans-serif;
-      font-size: 9pt;
-      color: #000;
+      font-family: 'Figtree', Arial, sans-serif; font-size: 9pt; color: #000;
     }
   }
   /* page one already carries the full name in the header */
   @page :first {
     @bottom-right {
       content: "pg. " counter(page) " of " counter(pages);
-      font-family: 'Barlow', sans-serif;
-      font-size: 9pt;
-      color: #000;
+      font-family: 'Figtree', Arial, sans-serif; font-size: 9pt; color: #000;
     }
   }
-  html, body { height: auto; overflow: visible; background: #fff !important; }
-  #app { height: auto; }
-  .skip-link, .toolbar, .form-panel, .site-footer, .print-tip-overlay { display: none !important; }
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  #app { display: block !important; height: auto !important; }
+  .skip-link, .topbar, .brand-stripe, .notice, .section-nav, .form-content, .site-footer, .preview-label, dialog { display: none !important; }
   .main { display: block !important; }
   .preview-panel { background: none !important; padding: 0 !important; overflow: visible !important; }
   .cv-doc { box-shadow: none !important; max-width: 100% !important; padding: 0 !important; min-height: 0 !important; }
@@ -350,99 +308,106 @@ body { height: 100vh; overflow: hidden; font-family: 'Barlow', sans-serif; backg
 </style>
 </head>
 <body>
-<a class="skip-link" href="#form-content">Skip to form</a>
+<a class="skip-link" href="#form-content">Skip to the form</a>
 <div id="app">
 
-  <div class="toolbar" role="banner">
+  <header class="topbar">
     <div>
-      <span class="t-title">Artist CV Builder</span>
-      <span class="t-sub" aria-hidden="true">Fill in the form &middot; Toggle sections on/off &middot; Print when ready</span>
+      <h1 class="app-title">Artist CV Builder</h1>
+      <p class="app-sub">Fill in what applies to you. Your CV builds itself in the preview.</p>
     </div>
-    <div class="toolbar-actions">
-      <span id="save-badge" class="save-badge" aria-live="polite" aria-atomic="true">&#x2713; Saved</span>
-      <button class="fmt-help-btn" type="button" id="fmt-help-btn" aria-label="Formatting help">*B*</button>
-      <button class="clear-btn" id="clear-btn" type="button">Clear Form</button>
-      <button class="copy-btn" type="button" id="copy-btn" aria-live="polite">Copy Text</button>
-      <button class="print-btn" type="button" id="print-btn">Print / Save PDF</button>
+    <div class="actions">
+      <span id="save-badge" class="save-badge">Saves automatically in this browser</span>
+      <button class="btn btn-quiet" type="button" id="fmt-help-btn">Formatting tips</button>
+      <button class="btn btn-quiet" type="button" id="data-btn">Back up or reset</button>
+      <button class="btn btn-secondary" type="button" id="copy-btn">Copy text</button>
+      <button class="btn btn-primary" type="button" id="print-btn">Save as PDF or print</button>
     </div>
-  </div>
+  </header>
+  <div class="brand-stripe" aria-hidden="true"></div>
+  <div id="notice" class="notice" hidden></div>
 
   <div class="main">
-    <div class="form-panel">
-      <nav id="section-nav" class="section-nav" aria-label="CV sections">
-        <!-- Rendered dynamically by buildNav() -->
-      </nav>
-      <div id="form-content" class="form-content" role="main" tabindex="-1"></div>
-    </div>
-    <div class="preview-panel" role="complementary" aria-label="CV preview">
-      <div
-        id="cv-preview"
-        class="cv-doc"
-        aria-live="polite"
-        aria-atomic="false"
-        aria-label="CV preview document"
-        role="region"
-      ></div>
-    </div>
+    <nav id="section-nav" class="section-nav" aria-label="CV sections"></nav>
+    <main id="form-content" class="form-content" tabindex="-1"></main>
+    <section class="preview-panel" id="preview-panel" aria-label="CV preview" tabindex="-1">
+      <p class="preview-label" aria-hidden="true">Preview</p>
+      <div id="cv-preview" class="cv-doc"></div>
+    </section>
   </div>
 
-  <footer class="site-footer" role="contentinfo">
-    <span>Created by <a href="https://www.jeromefdn.org" target="_blank" rel="noopener noreferrer">Jerome Foundation</a> &middot; Last updated August 26, 2026 &nbsp;|&nbsp; A note about the privacy of this tool: Everything you enter stays on your device. This tool does not collect, store, or transmit your data &mdash; your CV information is saved only in your browser and is never shared with Jerome Foundation or anyone else.</span>
+  <footer class="site-footer">
+    Created by <a href="https://www.jeromefdn.org" target="_blank" rel="noopener noreferrer">Jerome Foundation<span class="sr-only"> (opens in a new tab)</span></a>. Last updated November 13, 2026. Everything you enter stays on your device. It is saved only in this browser and is never sent to Jerome Foundation or anyone else.
   </footer>
 
-  <!-- Formatting help modal -->
-  <div class="fmt-overlay" id="fmt-overlay" role="dialog" aria-modal="true" aria-labelledby="fmt-heading">
-    <div class="fmt-box">
-      <h2 id="fmt-heading">Text Formatting</h2>
-      <p>Use these shortcuts anywhere in the form. They will render correctly in the CV preview and printed output.</p>
-      <table class="fmt-table">
-        <thead>
-          <tr><th>Type this</th><th>Renders as</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>*word*</td><td><em>italic</em></td></tr>
-          <tr><td>**word**</td><td><strong>bold</strong></td></tr>
-          <tr><td>***word***</td><td><strong><em>bold italic</em></strong></td></tr>
-        </tbody>
-      </table>
-      <p class="fmt-note">Example: type <code style="font-size:0.875rem;color:#007c89;font-style:normal">*Soft Structures*</code><code style="font-size:0.875rem;color:#007c89;font-style:normal">, Walker Art Center</code><br>→ renders as: <span style="font-style:normal"><em>Soft Structures</em>, Walker Art Center</span></p>
-      <p class="fmt-note">Note: formatting is shown in the CV preview and print output. It does not appear in the form fields themselves.</p>
-      <button class="fmt-close" id="fmt-close" type="button">Got it</button>
-    </div>
-  </div>
+  <div id="sr-status" class="sr-only" role="status" aria-live="polite"></div>
 
-  <!-- Print tip modal -->
-  <div class="print-tip-overlay" id="print-tip-overlay" role="dialog" aria-modal="true" aria-labelledby="print-tip-heading">
-    <div class="print-tip-box">
-      <h2 id="print-tip-heading">Before you print</h2>
-      <ol>
-        <li>For a PDF rather than paper, set <strong>Destination</strong> to <strong>Save as PDF</strong>.</li>
-        <li>Leave <strong>Margins</strong> on Default. This page sets its own.</li>
-        <li>Turn off <strong>Headers and footers</strong>, called <strong>Print headers and footers</strong> in Firefox and Safari. This removes the browser's URL and date from your pages.</li>
-      </ol>
-      <p class="print-tip-note">Your CV numbers its own pages at the bottom right, with your surname, so a separated packet can be put back in order. Firefox is the exception: print from Chrome, Edge, or Safari if you need numbered pages.</p>
-      <div class="print-tip-actions">
-        <button class="print-tip-go" id="print-tip-go" type="button">Open Print Dialog</button>
-        <button class="print-tip-cancel" id="print-tip-cancel" type="button">Cancel</button>
-      </div>
+  <dialog id="fmt-dialog" aria-labelledby="fmt-heading">
+    <h2 id="fmt-heading">Formatting tips</h2>
+    <p>These marks work in any field. The preview and your PDF show the formatting; the form shows the marks.</p>
+    <table class="fmt-table">
+      <thead><tr><th scope="col">Type this</th><th scope="col">To get this</th></tr></thead>
+      <tbody>
+        <tr><td>*word*</td><td><em>italic</em></td></tr>
+        <tr><td>**word**</td><td><strong>bold</strong></td></tr>
+        <tr><td>***word***</td><td><strong><em>bold italic</em></strong></td></tr>
+      </tbody>
+    </table>
+    <p class="dialog-note">For example, <span class="fmt-code">*Soft Structures*, Walker Art Center</span> becomes <em>Soft Structures</em>, Walker Art Center.</p>
+    <div class="dialog-actions"><button class="btn btn-primary" type="button" data-close>Got it</button></div>
+  </dialog>
+
+  <dialog id="print-dialog" aria-labelledby="print-heading">
+    <h2 id="print-heading">Save as PDF or print</h2>
+    <p>Your browser’s print window opens next. Three settings give the cleanest result:</p>
+    <ol>
+      <li>For a PDF, set <strong>Destination</strong> to <strong>Save as PDF</strong>.</li>
+      <li>Leave <strong>Margins</strong> on Default. This page sets its own.</li>
+      <li>Turn off <strong>Headers and footers</strong>. That removes the web address and date from your pages.</li>
+    </ol>
+    <p class="dialog-note">Chrome and Edge number the pages at the bottom right, with your surname. Other browsers may leave pages unnumbered.</p>
+    <div class="dialog-actions">
+      <button class="btn btn-primary" type="button" id="print-go">Open the print window</button>
+      <button class="btn btn-secondary" type="button" data-close>Cancel</button>
     </div>
-  </div>
+  </dialog>
+
+  <dialog id="data-dialog" aria-labelledby="data-heading">
+    <h2 id="data-heading">Your saved work</h2>
+    <p>Your CV saves automatically in this browser, on this device. It is not stored anywhere else, so it won’t follow you to another computer, and clearing your browsing data erases it.</p>
+    <h3>Keep a backup</h3>
+    <p>Download a backup file and keep it somewhere safe. You can load it later, here or on another computer, and keep editing.</p>
+    <button class="btn btn-primary" type="button" id="backup-btn">Download a backup file</button>
+    <h3>Load a backup</h3>
+    <p>This replaces what is in the form now.</p>
+    <button class="btn btn-secondary" type="button" id="restore-btn">Choose a backup file</button>
+    <input type="file" id="restore-file" accept=".json,application/json" hidden aria-label="Backup file">
+    <h3>Start over</h3>
+    <p>Erase everything in the form and begin with a blank CV.</p>
+    <button class="btn btn-danger" type="button" id="clear-btn">Clear the form</button>
+    <div class="dialog-actions"><button class="btn btn-secondary" type="button" data-close>Close</button></div>
+  </dialog>
 
 </div>
 <script>
-const STORAGE_KEY = 'jerome_artist_cv_v3';
+// Changing this key would orphan every artist's saved CV. Leave it alone.
+const STORAGE_KEY  = 'jerome_artist_cv_v3';
+// One-time copy of whatever was saved before the November 2026 update first ran.
+const SAFETY_KEY   = 'jerome_artist_cv_v3_before_2026_11';
+const APP_VERSION  = '2026-11';
+// 'unexported': ask before leaving when there are edits since the last PDF, copy, or backup.
+// 'unsaved':    ask only when the browser could not save.
+const WARN_ON_LEAVE = 'unexported';
 
 // ─────────────────────────────────────────────────────────────────
 // SECTION METADATA
-// defaultOn: whether section appears in CV on first load
-// group: used for nav grouping labels
 // ─────────────────────────────────────────────────────────────────
 const SECTION_META = {
   contact:          { label: 'Contact Info',               defaultOn: true,  group: 'core',       alwaysOn: true },
   artist_statement: { label: 'Brief Artist Statement',     defaultOn: true,  group: 'core' },
   education:        { label: 'Education',                  defaultOn: true,  group: 'core' },
   commissions:      { label: 'Commissions',                defaultOn: true,  group: 'other',      tip: 'List the title of the commissioned work or public project, date, site, and sponsor or producer.' },
-  works_in_progress:{ label: 'Works in Progress',          defaultOn: true,  group: 'other',      tip: 'List works you are currently developing but have not yet completed. Give the title, the year you expect to finish, and a short description of the project and where it stands.' },
+  works_in_progress:{ label: 'Works in Progress',          defaultOn: true,  group: 'wip',        tip: 'List works you are currently developing but have not yet completed. Give the title, the year you expect to finish, and a short description of the project and where it stands.' },
   awards:           { label: 'Awards & Grants',            defaultOn: true,  group: 'other',      tip: 'List recent awards first, working backward in chronological order. Include project grants, prizes won in competition, and fellowships.' },
   residencies:      { label: 'Residencies',                defaultOn: true,  group: 'other',      tip: 'List artist residencies, working backward from the most recent. Include the name of the residency program, the year, and where it took place.' },
   teaching:         { label: 'Teaching, Lectures & Other Experiences', defaultOn: true, group: 'other', tip: 'List work that relates to your profession: teaching positions, lectures given, curatorial projects, installations, or recordings on which you have assisted or performed.' },
@@ -450,9 +415,13 @@ const SECTION_META = {
   selected_writing: { label: 'Selected Writing',           defaultOn: true,  group: 'other',      tip: 'List writing you have published about art or your field: essays, criticism, catalog texts, interviews you conducted. This is writing by you, as distinct from press coverage about you. Most recent first.' },
   other_experience: { label: 'Other Artistic Experience',  defaultOn: true,  group: 'other',      tip: 'Use this section to list your artistic experiences as a non-generative artist: for example, as a dancer, musician, editor, or actor.' },
   additional_info:  { label: 'Additional Information',     defaultOn: true,  group: 'other',      tip: 'Add as many custom sections as you need. Each entry gets its own header and content block in the CV output.' },
-  performances:     { label: 'Performances & Productions', defaultOn: true,  group: 'performing', tip: 'List works or projects for which you are the creator and lead generative artist, such as the choreographer or playwright. List the most recent events first. Include year, title, presenting organization, and city. You may want to include any featured collaborators on the piece. For playwrights, indicate whether the work was a reading or full production, and whether it is a one-act, full-length, or musical.' },
-  albums:           { label: 'Albums',                     defaultOn: true,  group: 'performing', tip: 'List all recordings of your work. Include album title, work title (if you are not the only artist on the album), record label, catalog number, and year released.' },
-  screenings:       { label: 'Completed Films',     defaultOn: true,  group: 'film',       tip: 'List screenings and festivals. Include festival name, location, and year. For works both completed and in production, you may categorize by your role (director, writer, etc.) or type of work (TV, feature, documentary, etc.).' },
+  dance_works:      { label: 'Dance & Choreography',       defaultOn: true,  group: 'dance',      tip: 'List dance works you created or choreographed, most recent first. Include the year, title, presenter or venue, and city. Note featured collaborators, such as a composer or designer, and whether the piece was a premiere, an evening-length work, or part of a shared program.' },
+  music_works:      { label: 'Compositions & Performances', defaultOn: true, group: 'music',      tip: 'List works you composed and performances you led, most recent first. Include the year, title, ensemble or presenter, and city. For compositions, note the instrumentation and who gave the premiere.' },
+  tech_works:       { label: 'Completed Works',            defaultOn: true,  group: 'tech',       arrangeLabel: 'Completed Works (Technology Centered Art)', tip: 'List works where technology is central to the art: interactive installations, software and games, virtual or augmented reality, generative or networked pieces. Most recent first. Give the year, title, the form the work takes, and where it was presented or can be found.' },
+  tech_exhibitions: { label: 'Exhibitions',                defaultOn: true,  group: 'tech',       arrangeLabel: 'Exhibitions (Technology Centered Art)', tip: 'List exhibitions, festivals, and showcases that presented your technology centered work, most recent first. Note in the description whether it was a solo or group presentation.' },
+  performances:     { label: 'Performances & Productions', defaultOn: true,  group: 'theater',    tip: 'List theater, performance, and spoken word works for which you are the creator and lead generative artist, such as the playwright, the director, or the performer of your own text. List the most recent first. Include year, title, presenting organization, and city. For playwrights, indicate whether the work was a reading or full production, and whether it is a one-act, full-length, or musical.' },
+  albums:           { label: 'Albums',                     defaultOn: true,  group: 'music',      tip: 'List all recordings of your work. Include album title, work title (if you are not the only artist on the album), record label, catalog number, and year released.' },
+  screenings:       { label: 'Completed Films',            defaultOn: true,  group: 'film',       tip: 'List the completed films you directed, most recent first. Note any student work in the description.' },
   published_works:  { label: 'Published Works',            defaultOn: true,  group: 'literary',   tip: 'Include book title, publisher, and year of publication. Consider separate entries for chapter books, anthologies, and journals.' },
   readings:         { label: 'Readings',                   defaultOn: true,  group: 'literary',   tip: 'List the title of the work presented and the location. Include the most recent readings first.' },
   solo:             { label: 'Solo Exhibitions',           defaultOn: true,  group: 'visual',     tip: 'List the most recent exhibitions first.' },
@@ -460,238 +429,368 @@ const SECTION_META = {
   public_projects:  { label: 'Public Projects',            defaultOn: true,  group: 'visual',     tip: 'List any projects that have taken place in public space, listing the most recent projects first.' },
 };
 
-const NAV_GROUPS = {
-  core:       'General',
-  performing: 'Performing Arts (Dance, Music, Theater)',
-  film:       'Film',
-  literary:   'Literature',
-  visual:     'Visual Arts & Tech-Centered Art',
-  other:      'Other',
+const ICON = paths => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths}</svg>`;
+// Icon paths are from Lucide (lucide.dev), ISC License.
+const ICONS = {
+  core:       ICON('<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>'),
+  theater:    ICON('<path d="M10 11h.01"/><path d="M14 6h.01"/><path d="M18 6h.01"/><path d="M6.5 13.1h.01"/><path d="M22 5c0 9-4 12-6 12s-6-3-6-12c0-2 2-3 6-3s6 1 6 3"/><path d="M17.4 9.9c-.8.8-2 .8-2.8 0"/><path d="M10.1 7.1C9 7.2 7.7 7.7 6 8.6c-3.5 2-4.7 3.9-3.7 5.6 4.5 7.8 9.5 8.4 11.2 7.4.9-.5 1.9-2.1 1.9-4.7"/><path d="M9.1 16.5c.3-1.1 1.4-1.7 2.4-1.4"/>'),
+  dance:      ICON('<circle cx="12" cy="4" r="2.6" fill="currentColor" stroke="none"/><path d="M12 9v5.5M12 10.5 6.5 6.5M12 10.5l5.5-4M12 14.5 10.8 21M12 14.5l6.5-3.5" stroke-width="3"/>'), // Jerome Foundation's own icon
+  music:      ICON('<path d="M21 16V3a1 1 0 0 0-1.28-.96l-10 2.917a1 1 0 0 0-.72.96V19"/><circle cx="18" cy="16" r="3"/><circle cx="6" cy="19" r="3"/>'),
+  tech:       ICON('<path d="M12 20v2"/><path d="M12 2v2"/><path d="M17 20v2"/><path d="M17 2v2"/><path d="M2 12h2"/><path d="M2 17h2"/><path d="M2 7h2"/><path d="M20 12h2"/><path d="M20 17h2"/><path d="M20 7h2"/><path d="M7 20v2"/><path d="M7 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/>'),
+  film:       ICON('<path d="m12.296 3.464 3.02 3.956"/><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m6.18 5.276 3.1 3.899"/>'),
+  literary:   ICON('<path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/>'),
+  visual:     ICON('<path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>'),
+  other:      ICON('<path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/>'),
+  wip:        ICON('<path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/><path d="m8 6 2-2"/><path d="m18 16 2-2"/><path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>'),
+  arrange:    ICON('<path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/>'),
+  check:      ICON('<path d="M20 6 9 17l-5-5"/>'),
 };
+const CHEVRON = '<svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>';
 
-// Co-creator row appended to all work-based sections
-const COCREATOR_ROW = [{
-  key: 'cocreator',
-  label: 'Co-creator (if applicable)',
-  ph: 'Name, Role',
-  help: 'List any collaborators or co-creators on this work, followed by their role.',
-  rowClass: 'cocreator-row',
-}];
+// The seven groups between General and Other are Jerome Foundation's artistic fields.
+const NAV_GROUPS = {
+  core:     { label: 'General' },
+  dance:    { label: 'Dance', field: true },
+  film:     { label: 'Film', field: true },
+  literary: { label: 'Literature', field: true },
+  music:    { label: 'Music', field: true },
+  tech:     { label: 'Technology Centered Art', field: true },
+  theater:  { label: 'Theater, Performance & Spoken Word', field: true },
+  visual:   { label: 'Visual Art', field: true },
+  wip:      { label: 'Works in Progress', direct: true },
+  other:    { label: 'Other', sub: 'Awards, residencies, teaching, press' },
+};
+// Entries can be moved among these three sections: they share the same fields.
+const PERFORMING = ['dance_works', 'music_works', 'performances'];
 
-const CODIRECTOR_ROW = [{
-  key: 'cocreator',
-  label: 'Co-director (optional)',
-  ph: 'Maria Santos',
-  help: 'If this film was co-directed, list all of the co-directors by name.',
-  rowClass: 'cocreator-row',
-}];
+// Interface-only settings (which groups are folded, one-time notes).
+// Kept apart from the CV save so they can never affect it.
+const UI_KEY = 'jerome_artist_cv_ui';
+let ui = {};
+try { const u = JSON.parse(localStorage.getItem(UI_KEY) || '{}'); if (u && typeof u === 'object' && !Array.isArray(u)) ui = u; } catch (e) {}
+function saveUI() { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) {} }
 
-const CURATOR_ROW = [{
-  key: 'curator',
-  label: 'Curator (optional)',
-  ph: 'Javier Mendoza',
-  help: 'List the curator or curators by name if you\u2019d like.',
-}];
+// The order sections print in until an artist rearranges them.
+// This list, ENTRY_MAP, and state.order are the only places section order lives.
+const DEFAULT_ORDER = [
+  'education',
+  'dance_works',
+  'music_works', 'albums',
+  'performances',
+  'screenings',
+  'published_works', 'readings',
+  'tech_works', 'tech_exhibitions',
+  'solo', 'group', 'public_projects',
+  'commissions', 'works_in_progress', 'awards', 'residencies', 'teaching',
+  'press', 'selected_writing', 'other_experience', 'additional_info',
+];
 
-const DESCRIPTION_ROW = [{
-  key: 'description',
-  label: 'Description (optional)',
-  ph: 'Brief description or additional context.',
-  help: 'One to two sentences. Optional — leave blank if not needed.',
-  rows: 2,
-}];
+// The fixed print order before November 2026.
+const LEGACY_ORDER = ['education', 'performances', 'albums', 'screenings', 'published_works', 'readings', 'solo', 'group', 'public_projects',
+  'commissions', 'works_in_progress', 'awards', 'residencies', 'teaching', 'press', 'selected_writing', 'other_experience', 'additional_info'];
+
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_OPTIONS = [['', 'No month'],
+  ...['January','February','March','April','May','June','July','August','September','October','November','December']
+    .map((m, i) => [String(i + 1).padStart(2, '0'), m])];
+
+const COCREATOR_ROW  = [{ key:'cocreator', label:'Co-creator (if applicable)', ph:'Name, Role', help:'List any collaborators or co-creators on this work, followed by their role.' }];
+const CODIRECTOR_ROW = [{ key:'cocreator', label:'Co-director (optional)', ph:'Maria Santos', help:'If this film was co-directed, list all of the co-directors by name.' }];
+const CURATOR_ROW    = [{ key:'curator', label:'Curator (optional)', ph:'Javier Mendoza', help:'List the curator or curators by name if you\u2019d like.' }];
+const DESCRIPTION_ROW = [{ key:'description', label:'Description (optional)', ph:'Brief description or additional context.', help:'One to two sentences.', rows: 2 }];
 
 // ─────────────────────────────────────────────────────────────────
 // FIELD CONFIG
-// Add `help` to any field to show guidance text beneath it.
-// Education uses year_started / year_ended instead of a single year.
+// Each inner array is one row of the form. Keys are the saved data keys:
+// renaming one would hide what artists have already saved under it.
 // ─────────────────────────────────────────────────────────────────
+const CONTACT_FIELDS = [
+  { key:'name',       label:'Full name', ph:'Remi Webb', ac:'name' },
+  { key:'discipline', label:'Primary artistic role or practice (optional)', ph:'Painter, Documentary Filmmaker, Choreographer', help:'Your primary medium or practice, for example Choreographer, Filmmaker, or Interdisciplinary Artist.' },
+  { key:'address',    label:'Street address (optional)', ph:'123 Main St', ac:'street-address' },
+  { key:'location',   label:'City and state or country', ph:'Anytown, AS', ac:'address-level2' },
+  { key:'phone',      label:'Phone (optional)', ph:'646-555-1234', type:'tel', ac:'tel' },
+  { key:'email',      label:'Email', ph:'heyremi@example.com', type:'email', ac:'email' },
+  { key:'website',    label:'Website', ph:'remiwebb.com', ac:'url', help:'Leave off \u201chttps://\u201d so it reads more cleanly.' },
+];
+
+// Dance, music, and theater entries have the same fields with different wording
+// and examples, which is what lets an entry move from one to another intact.
+function performingFields(x) {
+  return [
+    [
+      {key:'title', label:'Work title', ph: x.title},
+      {key:'year',  label:'Year',       ph: x.year, w:'7rem'},
+    ],
+    [{key:'cocreator', label:'Co-creator (if applicable)', ph: x.collab, help:'List any collaborators or co-creators on this work, followed by their role.'}],
+    [{key:'role',     label:'Role (optional)', ph: x.role, help: x.roleHelp}],
+    [{key:'venue',    label: x.venueLabel,     ph: x.venue, help: x.venueHelp}],
+    [{key:'location', label:'Location',        ph:'Anytown, AS'}],
+    [{key:'duration', label:'Duration',        ph: x.duration, help: x.durationHelp}],
+    [{key:'description', label:'Description (optional)', ph: x.desc, help:'One to two sentences.', rows: 2}],
+  ];
+}
+
 const FIELD_CONFIG = {
   education: [
-    [{key:'degree',       label:'Degree',       ph:'MFA',    help:'Full degree name, e.g. MFA, BFA, BA, BS, Certificate.'}],
+    [{key:'degree',      label:'Degree',      ph:'MFA', help:'For example MFA, BFA, BA, BS, or Certificate.'}],
     [{key:'institution', label:'Institution', ph:'Meridian University'}],
     [
-      {key:'year_started', label:'Year Started',  ph:'2018',   w:'6.5rem'},
-      {key:'year_ended',   label:'Year Ended',    ph:'2021',   w:'6.5rem', help:'Or "Present" if ongoing.'},
+      {key:'month_started', label:'Start month', type:'month', help:'Recommended. Leave on \u201cNo month\u201d to show years only.'},
+      {key:'year_started',  label:'Start year',  ph:'2018', w:'7rem'},
+    ],
+    [
+      {key:'month_ended', label:'End month', type:'month'},
+      {key:'year_ended',  label:'End year',  ph:'2021', w:'7rem', help:'Or \u201cPresent\u201d if ongoing.'},
     ],
     [{key:'location', label:'Location', ph:'Anytown, AS'}],
     [{key:'description', label:'Description (optional)', rows: 2,
       ph:'Brief description or additional context. This could include your major, minor, or thesis work.'}],
   ],
   solo: [
-    [{key:'title', label:'Exhibition Title', ph:'Remi Webb: Soft Structures'}],
+    [{key:'title', label:'Exhibition title', ph:'Remi Webb: Soft Structures'}],
     ...CURATOR_ROW.map(f => [f]),
     ...COCREATOR_ROW.map(f => [f]),
     [
-      {key:'venue', label:'Venue / Gallery', ph:'Riverside Gallery', help:'Full name of the space, gallery, or museum.'},
-      {key:'year',  label:'Year',            ph:'2023', w:'6.5rem', help:'Year of opening.'},
+      {key:'venue', label:'Venue or gallery', ph:'Riverside Gallery', help:'Full name of the space, gallery, or museum.'},
+      {key:'year',  label:'Year',             ph:'2023', w:'7rem', help:'Year of opening.'},
     ],
-    [{key:'location', label:'Location',        ph:'Anytown, AS'}],
+    [{key:'location', label:'Location', ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   group: [
-    [{key:'title', label:'Exhibition Title', ph:'Holding Patterns'}],
+    [{key:'title', label:'Exhibition title', ph:'Holding Patterns'}],
     ...CURATOR_ROW.map(f => [f]),
     ...COCREATOR_ROW.map(f => [f]),
     [
-      {key:'venue', label:'Venue / Gallery', ph:'Midpoint Visual Arts Center', help:'Full name of the space, gallery, or museum.'},
-      {key:'year',  label:'Year',            ph:'2024', w:'6.5rem', help:'Year of opening.'},
+      {key:'venue', label:'Venue or gallery', ph:'Midpoint Visual Arts Center', help:'Full name of the space, gallery, or museum.'},
+      {key:'year',  label:'Year',             ph:'2024', w:'7rem', help:'Year of opening.'},
     ],
-    [{key:'location', label:'Location',        ph:'Anytown, AS'}],
+    [{key:'location', label:'Location', ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
-  performances: [
+  dance_works: performingFields({
+    title: 'Bracing for a Minor Event', year: '2022', collab: 'Name, Composer',
+    role: 'Choreographer', roleHelp: 'Your role or roles in the work, such as Choreographer or Choreographer and Performer.',
+    venueLabel: 'Presenter or venue', venue: 'The Annex', venueHelp: 'The presenting organization, festival, or venue.',
+    duration: '55 min.', durationHelp: 'For example 55 min., or 20 min. on a shared program.',
+    desc: 'For example: evening-length premiere for six dancers with live score.',
+  }),
+  music_works: performingFields({
+    title: 'Nine Rooms, for string quartet', year: '2023', collab: 'Name, Librettist',
+    role: 'Composer, Bandleader', roleHelp: 'Your role or roles, such as Composer, Bandleader, or Composer and Performer.',
+    venueLabel: 'Ensemble, presenter, or venue', venue: 'Lowertown Chamber Players', venueHelp: 'Who performed or presented the work, and where.',
+    duration: '18 min.', durationHelp: 'For example 18 min., or 2 sets.',
+    desc: 'For example: premiere, commissioned for the ensemble\u2019s tenth season.',
+  }),
+  performances: performingFields({
+    title: 'The Long Table', year: '2022', collab: 'Name, Director',
+    role: 'Playwright, Performer', roleHelp: 'Your specific role or roles in the presentation. List several separated by commas.',
+    venueLabel: 'Venue or company', venue: 'The Annex Theater', venueHelp: 'Presenting venue, organization, etc.',
+    duration: '90 min.', durationHelp: 'For example 75 min., 2 hrs., or 45 min. no intermission.',
+    desc: 'For example: full-length play, staged reading. Or: solo spoken word performance.',
+  }),
+  tech_works: [
     [
-      {key:'title', label:'Work Title', ph:'Bracing for a Minor Event'},
-      {key:'year',  label:'Year',       ph:'2022', w:'6.5rem'},
+      {key:'title', label:'Work title', ph:'Signal Garden'},
+      {key:'year',  label:'Year',       ph:'2024', w:'7rem'},
     ],
     ...COCREATOR_ROW.map(f => [f]),
-    [{key:'role',     label:'Role (optional)', ph:'Choreographer, Playwright', help:'Your specific role or roles in the presentation. List several separated by commas.'}],
-    [{key:'venue',    label:'Venue / Company', ph:'The Annex', help:'Presenting venue, organization, etc.'}],
-    [{key:'location', label:'Location',        ph:'Anytown, AS'}],
-    [{key:'duration', label:'Duration',        ph:'75 min.', help:'E.g. 75 min., 2 hrs., 45 min. no intermission.'}],
+    [{key:'role',     label:'Role (optional)', ph:'Lead Artist, Programmer', help:'Your role or roles in making the work. List several separated by commas.'}],
+    [{key:'medium',   label:'Form or medium',  ph:'Interactive installation', help:'For example interactive installation, VR experience, game, software, or generative video.'}],
+    [{key:'venue',    label:'Presenter, venue, or platform', ph:'Midpoint Media Lab', help:'Where the work was shown or where people can find it.'}],
+    [{key:'location', label:'Location (optional)', ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   screenings: [
     [
-      {key:'title', label:'Film / Work Title', ph:'Still Waters'},
-      {key:'year',  label:'Year',              ph:'2024', w:'6.5rem'},
+      {key:'title', label:'Film or work title', ph:'Still Waters'},
+      {key:'year',  label:'Year',               ph:'2024', w:'7rem'},
     ],
     ...CODIRECTOR_ROW.map(f => [f]),
     [{key:'role',     label:'Role (optional)', ph:'Director, Editor', help:'Your specific role or roles in the film. List several separated by commas.'}],
-    [{key:'duration', label:'Runtime',         ph:'82 min.', help:'E.g. 82 min., 14 min., 6 min.'}],
+    [{key:'duration', label:'Runtime',         ph:'82 min.', help:'For example 82 min., 14 min., or 6 min.'}],
     ...DESCRIPTION_ROW.map(f => [f]),
-    [{key:'screenings_list', label:'Screening Locations', ph:'', rows: 4,
-      help:'List each screening on its own line. Include Festival Name, Year, and Country. E.g. "Signal Film Festival, 2024, Canada"'}],
+    [{key:'screenings_list', label:'Screening locations and dates', ph:'', rows: 4,
+      help:'List each screening on its own line. Include the festival name, location, and screening date, for example: \u201cSignal Film Festival, Vancouver, Canada (June 22, 2024).\u201d'}],
   ],
   published_works: [
     [
       {key:'title', label:'Title', ph:'The Field', help:'Title of the book, script, libretto, or other published work.'},
-      {key:'year',  label:'Year',  ph:'2023', w:'6.5rem'},
+      {key:'year',  label:'Year',  ph:'2023', w:'7rem'},
     ],
     ...COCREATOR_ROW.map(f => [f]),
-    [{key:'publisher', label:'Publisher / Press', ph:'Common Thread Press'}],
+    [{key:'publisher', label:'Publisher or press', ph:'Common Thread Press'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   readings: [
-    [{key:'title', label:'Name of Event or Series', ph:'Open Mic at the Loft', help:'Name of the event, series, or reading.'}],
-    [{key:'year',  label:'Year', ph:'2024', w:'6.5rem'}],
-    [{key:'venue',    label:'Venue / Organization', ph:'Open Book Literary Center'}],
-    [{key:'location', label:'Location',             ph:'Anytown, AS'}],
+    [{key:'title', label:'Name of event or series', ph:'Open Mic at the Loft', help:'Name of the event, series, or reading.'}],
+    [{key:'year',  label:'Year', ph:'2024', w:'7rem'}],
+    [{key:'venue',    label:'Venue or organization', ph:'Open Book Literary Center'}],
+    [{key:'location', label:'Location',              ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   albums: [
     [
-      {key:'title', label:'Album Title', ph:'Tessellations'},
-      {key:'year',  label:'Year',        ph:'2023', w:'6.5rem'},
+      {key:'title', label:'Album title', ph:'Tessellations'},
+      {key:'year',  label:'Year',        ph:'2023', w:'7rem'},
     ],
     ...COCREATOR_ROW.map(f => [f]),
     [{key:'role',     label:'Role (optional)',    ph:'Composer, Producer', help:'Your role or instrumentation on this album. List several separated by commas.'}],
     [{key:'format',   label:'Format',             ph:'LP, EP, Digital', help:'LP, EP, Digital, etc.'}],
-    [{key:'duration', label:'Running Time',       ph:'42:18', help:'Total running time, e.g. 42:18 or 38 min.'}],
-    [{key:'label',    label:'Label / Publisher', ph:'Longform Sounds', help:'Record label, or "Self-released" if independently released.'}],
+    [{key:'duration', label:'Running time',       ph:'42:18', help:'Total running time, for example 42:18 or 38 min.'}],
+    [{key:'label',    label:'Label or publisher', ph:'Longform Sounds', help:'Record label, or \u201cSelf-released\u201d if independently released.'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   awards: [
-    [{key:'name', label:'Award / Grant Name', ph:'The Evergreen Arts Fellowship', help:'Use the full official name.'}],
-    [{key:'year', label:'Year', ph:'2023', w:'6.5rem'}],
-    [{key:'organization', label:'Awarding Organization', ph:'Clearview Foundation'}],
+    [{key:'name', label:'Award or grant name', ph:'The Evergreen Arts Fellowship', help:'Use the full official name.'}],
+    [{key:'year', label:'Year', ph:'2023', w:'11rem', help:'Or a range, such as 2023\u20132025.'}],
+    [{key:'organization', label:'Awarding organization', ph:'Clearview Foundation'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   residencies: [
-    [{key:'name', label:'Residency Name', ph:'Hollow Creek Artist Residency', help:'Name of the residency program, and the host organization if they differ.'}],
-    [{key:'year', label:'Year', ph:'2024', w:'6.5rem', help:'Or a range, e.g. 2023\u20132024.'}],
-    [{key:'location', label:'Residency Location', ph:'Anytown, AS'}],
+    [{key:'name', label:'Residency name', ph:'Hollow Creek Artist Residency', help:'Name of the residency program, and the host organization if they differ.'}],
+    [{key:'year', label:'Year', ph:'2024', w:'11rem', help:'Or a range, such as 2023\u20132024.'}],
+    [{key:'location', label:'Residency location', ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   commissions: [
-    [{key:'title', label:'Work Title', ph:'Towards a new day...'}],
-    [{key:'year',  label:'Year',       ph:'2024', w:'6.5rem'}],
+    [{key:'title', label:'Work title', ph:'Towards a new day...'}],
+    [{key:'year',  label:'Year',       ph:'2024', w:'7rem'}],
     ...COCREATOR_ROW.map(f => [f]),
-    [{key:'commissioner', label:'Commissioned By', ph:'Cultural Works Project'}],
+    [{key:'commissioner', label:'Commissioned by', ph:'Cultural Works Project'}],
     [{key:'location',     label:'Location',        ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
-  public_projects: [
-    [{key:'title', label:'Project Title', ph:'Gathering Ground'}],
-    [{key:'year',  label:'Year',          ph:'2023', w:'6.5rem'}],
+  tech_exhibitions: [
+    [{key:'title', label:'Exhibition or festival title', ph:'Common Signals'}],
     ...CURATOR_ROW.map(f => [f]),
     ...COCREATOR_ROW.map(f => [f]),
-    [{key:'organization', label:'Organization / Venue', ph:'City of Harborview', help:'Commissioning body, partner organization, or site.'}],
-    [{key:'location',     label:'Location',             ph:'Anytown, AS'}],
+    [
+      {key:'venue', label:'Venue, festival, or platform', ph:'Midpoint Media Lab', help:'The gallery, museum, festival, or online platform.'},
+      {key:'year',  label:'Year',                        ph:'2024', w:'7rem', help:'Year of opening.'},
+    ],
+    [{key:'location', label:'Location (optional)', ph:'Anytown, AS'}],
+    ...DESCRIPTION_ROW.map(f => [f]),
+  ],
+  public_projects: [
+    [{key:'title', label:'Project title', ph:'Gathering Ground'}],
+    [{key:'year',  label:'Year',          ph:'2023', w:'7rem'}],
+    ...CURATOR_ROW.map(f => [f]),
+    ...COCREATOR_ROW.map(f => [f]),
+    [{key:'organization', label:'Organization or venue', ph:'City of Harborview', help:'Commissioning body, partner organization, or site.'}],
+    [{key:'location',     label:'Location',              ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   press: [
-    [{key:'title',       label:'Article / Review Title', ph:'New Approaches to Common Themes', help:'Title of the review, interview, or essay — not the publication.'}],
+    [{key:'title', label:'Article or review title', ph:'New Approaches to Common Themes', help:'Title of the review, interview, or essay, not the publication.'}],
     [
-      {key:'publication', label:'Publication',  ph:'Framework Monthly', help:'Newspaper, magazine, catalog, or journal.'},
-      {key:'year',        label:'Year',         ph:'2025', w:'6.5rem'},
+      {key:'publication', label:'Publication', ph:'Framework Monthly', help:'Newspaper, magazine, catalog, or journal.'},
+      {key:'year',        label:'Year',        ph:'2025', w:'7rem'},
     ],
     [{key:'author', label:'Author (optional)', ph:'Javier Mendoza', help:'Include if the piece is a signed review or essay.'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   teaching: [
-    [{key:'role', label:'Role / Title', ph:'Adjunct Lecturer', help:'E.g. Visiting Artist, Adjunct Lecturer, Workshop Leader.'}],
-    [{key:'year', label:'Year', ph:'2024', w:'6.5rem', help:'Year or range, e.g. 2022\u20132024.'}],
-    [{key:'institution', label:'Institution / Venue', ph:'Stonehaven College of Art and Craft'}],
-    [{key:'location',    label:'Location',            ph:'Anytown, AS'}],
+    [{key:'role', label:'Role or title', ph:'Adjunct Lecturer', help:'For example Visiting Artist, Adjunct Lecturer, or Workshop Leader.'}],
+    [{key:'year', label:'Year', ph:'2024', w:'11rem', help:'Year or range, such as 2022\u20132024.'}],
+    [{key:'institution', label:'Institution or venue', ph:'Stonehaven College of Art and Craft'}],
+    [{key:'location',    label:'Location',             ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   works_in_progress: [
-    [{key:'title', label:'Work Title', ph:'Field Notes for a Vanishing Shore'}],
-    [{key:'year',  label:'Projected Completion', ph:'2027', w:'10.5rem', help:'Use a year, e.g. 2027. Keep it short so it fits the date column.'}],
-    [{key:'description', label:'Brief Description', rows: 2,
+    [{key:'title', label:'Work title', ph:'Field Notes for a Vanishing Shore'}],
+    [{key:'year',  label:'Projected completion', ph:'2027', w:'11rem', help:'Use a year, such as 2027. Keep it short so it fits the date column.'}],
+    [{key:'description', label:'Brief description', rows: 2,
       ph:'A feature documentary about the last commercial fishing families on the lake. Currently in post-production.'}],
   ],
   selected_writing: [
     [
       {key:'title', label:'Title', ph:'Notes on Working Slowly', help:'Title of the essay, review, or article.'},
-      {key:'year',  label:'Year',  ph:'2025', w:'6.5rem'},
+      {key:'year',  label:'Year',  ph:'2025', w:'7rem'},
     ],
-    [{key:'publication', label:'Publication / Outlet', ph:'Framework Monthly', help:'Journal, magazine, exhibition catalog, or website.'}],
+    [{key:'publication', label:'Publication or outlet', ph:'Framework Monthly', help:'Journal, magazine, exhibition catalog, or website.'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   other_experience: [
     [
-      {key:'title', label:'Work / Production Title', ph:'The Winter Suite'},
-      {key:'year',  label:'Year',                    ph:'2023', w:'6.5rem'},
+      {key:'title', label:'Work or production title', ph:'The Winter Suite'},
+      {key:'year',  label:'Year',                     ph:'2023', w:'7rem'},
     ],
-    [{key:'role',         label:'Your Role',              ph:'Dancer', help:'E.g. Dancer, Cellist, Editor, Actor, Production Assistant.'}],
-    [{key:'organization', label:'Company / Organization', ph:'Northline Dance Company', help:'Company, ensemble, production, or employer. Include the director or choreographer if relevant.'}],
-    [{key:'location',     label:'Location',               ph:'Anytown, AS'}],
+    [{key:'role',         label:'Your role',               ph:'Dancer', help:'For example Dancer, Cellist, Editor, Actor, or Production Assistant.'}],
+    [{key:'organization', label:'Company or organization', ph:'Northline Dance Company', help:'Company, ensemble, production, or employer. Include the director or choreographer if relevant.'}],
+    [{key:'location',     label:'Location',                ph:'Anytown, AS'}],
     ...DESCRIPTION_ROW.map(f => [f]),
   ],
   additional_info: [
-    [{key:'header',  label:'Section Header', ph:'Languages, Affiliations, Community Work...', help:'This will appear as the section title in your CV.'}],
+    [{key:'header',  label:'Section header', ph:'Languages, Affiliations, Community Work...', help:'This will appear as the section title in your CV.'}],
     [{key:'content', label:'Content', ph:'Add your text here...', rows: 4}],
     [{key:'dated', label:'Dated entries (optional)', rows: 4,
-      ph:'2024 | Panelist, Brooklyn Arts Council, Brooklyn, NY',
+      ph:'2024 | Panelist, Harborview Arts Council, Anytown, AS',
       help:'One per line. Put a year before a vertical bar to place it in the date column. Lines without one run the full width.'}],
   ],
 };
 
+// How each section's saved entry becomes a line in the CV.
+// The preview and the plain-text copy both read from here.
+const J = (...parts) => parts.filter(Boolean).join(', ');
+const ENTRY_MAP = {
+  education:        e => { const d = eduDate(e); return { year: d.text, yearParts: d.parts, main: J(e.degree, e.institution), sub: e.location, desc: e.description }; },
+  dance_works:      e => ({ year: e.year, main: e.title, role: e.role, sub: J(e.venue, e.location, e.duration), collab: e.cocreator, desc: e.description }),
+  music_works:      e => ({ year: e.year, main: e.title, role: e.role, sub: J(e.venue, e.location, e.duration), collab: e.cocreator, desc: e.description }),
+  performances:     e => ({ year: e.year, main: e.title, role: e.role, sub: J(e.venue, e.location, e.duration), collab: e.cocreator, desc: e.description }),
+  tech_works:       e => ({ year: e.year, main: e.title, role: e.role, sub: J(e.medium, e.venue, e.location), collab: e.cocreator, desc: e.description }),
+  tech_exhibitions: e => ({ year: e.year, main: e.title, curator: e.curator, sub: J(e.venue, e.location), collab: e.cocreator, desc: e.description }),
+  albums:           e => ({ year: e.year, main: e.title, role: e.role, sub: J(e.format, e.duration, e.label), collab: e.cocreator, desc: e.description }),
+  screenings:       e => ({ year: e.year, main: e.title, collabLabel: 'co-director', role: e.role, sub: e.duration, collab: e.cocreator, desc: e.description, extra: e.screenings_list }),
+  published_works:  e => ({ year: e.year, main: e.title, sub: e.publisher, collab: e.cocreator, desc: e.description }),
+  readings:         e => ({ year: e.year, main: e.title, sub: J(e.venue, e.location), desc: e.description }),
+  solo:             e => ({ year: e.year, main: e.title, curator: e.curator, sub: J(e.venue, e.location), collab: e.cocreator, desc: e.description }),
+  group:            e => ({ year: e.year, main: e.title, curator: e.curator, sub: J(e.venue, e.location), collab: e.cocreator, desc: e.description }),
+  public_projects:  e => ({ year: e.year, main: e.title, curator: e.curator, sub: J(e.organization, e.location), collab: e.cocreator, desc: e.description }),
+  commissions:      e => ({ year: e.year, main: e.title, sub: J(e.commissioner, e.location), collab: e.cocreator, desc: e.description }),
+  works_in_progress:e => ({ year: e.year, main: e.title, sub: e.description }),
+  awards:           e => ({ year: e.year, main: e.name, sub: e.organization, desc: e.description }),
+  residencies:      e => ({ year: e.year, main: e.name, sub: e.location, desc: e.description }),
+  teaching:         e => ({ year: e.year, main: e.role, sub: J(e.institution, e.location), desc: e.description }),
+  press:            e => ({ year: e.year, main: e.title, sub: J(e.publication, e.author ? `by ${e.author}` : ''), desc: e.description }),
+  selected_writing: e => ({ year: e.year, main: e.title, sub: e.publication, desc: e.description }),
+  other_experience: e => ({ year: e.year, main: e.title, role: e.role, sub: J(e.organization, e.location), desc: e.description }),
+};
+
 // ── Utilities ─────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
 function esc(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function contactFieldId(key)              { return `field-${key}`; }
-function entryFieldId(section, index, key){ return `field-${section}-${index}-${key}`; }
+function parseMarkdown(str) {
+  if (!str) return '';
+  return esc(str)
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+const txt = v => String(v == null ? '' : v).trim();
+function contactFieldId(key)               { return `field-${key}`; }
+function entryFieldId(section, index, key) { return `field-${section}-${index}-${key}`; }
 
 function emptyEntry(section) {
-  const fields = FIELD_CONFIG[section] || [];
-  return Object.fromEntries(fields.flat().map(f => [f.key, '']));
+  return Object.fromEntries((FIELD_CONFIG[section] || []).flat().map(f => [f.key, '']));
 }
-
 function defaultEnabled() {
   const out = {};
   for (const [k, v] of Object.entries(SECTION_META)) out[k] = v.defaultOn;
   return out;
 }
-
 function defaultData() {
   const data = { name:'', discipline:'', address:'', location:'', phone:'', email:'', website:'', artist_statement_text: '' };
   for (const sec of Object.keys(FIELD_CONFIG)) data[sec] = [emptyEntry(sec)];
   return data;
+}
+function announce(msg) {
+  const el = $('sr-status');
+  el.textContent = '';
+  setTimeout(() => { el.textContent = msg; }, 50);
 }
 
 // ── State ─────────────────────────────────────────────────────────
@@ -700,743 +799,812 @@ const state = {
   enabled: defaultEnabled(),
   data: defaultData(),
   fontStyle: 'sans',
+  order: DEFAULT_ORDER.slice(),
 };
 
 // ── Persistence ───────────────────────────────────────────────────
+// Reads a saved or backed-up CV into state. Fills in anything missing,
+// keeps anything it does not recognize, and never throws away an entry.
+function applySaved(parsed) {
+  if (!parsed || typeof parsed !== 'object') throw new Error('Not a saved CV');
+  const data = defaultData();
+  const src = (parsed.data && typeof parsed.data === 'object') ? parsed.data : {};
+  for (const [k, v] of Object.entries(src)) {
+    if (Array.isArray(data[k])) {
+      if (!Array.isArray(v)) continue;
+      const rows = v.filter(x => x && typeof x === 'object').map(x => {
+        const row = emptyEntry(k);
+        for (const [kk, vv] of Object.entries(x)) row[kk] = typeof vv === 'string' ? vv : (vv == null ? '' : String(vv));
+        return row;
+      });
+      if (rows.length) data[k] = rows;
+    } else if (k in data) {
+      data[k] = typeof v === 'string' ? v : (v == null ? '' : String(v));
+    } else {
+      data[k] = v;
+    }
+  }
+  state.data = data;
+  state.enabled = { ...defaultEnabled(), ...(parsed.enabled && typeof parsed.enabled === 'object' ? parsed.enabled : {}) };
+  state.fontStyle = parsed.fontStyle === 'serif' ? 'serif' : 'sans';
+  // A save with no order of its own predates section ordering: keep the order it has always printed in.
+  const saved = (Array.isArray(parsed.order) ? parsed.order : LEGACY_ORDER).filter((s, i, a) => DEFAULT_ORDER.includes(s) && a.indexOf(s) === i);
+  // A save made before a section existed gets that section slotted in after its usual neighbor.
+  const order = saved.slice();
+  DEFAULT_ORDER.forEach((sec, i) => {
+    if (order.includes(sec)) return;
+    const before = DEFAULT_ORDER.slice(0, i).reverse().find(s => order.includes(s));
+    order.splice(before ? order.indexOf(before) + 1 : 0, 0, sec);
+  });
+  state.order = order;
+}
+
+function snapshot() {
+  return JSON.parse(JSON.stringify({ appVersion: APP_VERSION, data: state.data, enabled: state.enabled, fontStyle: state.fontStyle, order: state.order }));
+}
+
+let loadProblem = false;
 function loadFromStorage() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return;
-    const parsed = JSON.parse(saved);
-    if (parsed.data)      state.data      = { ...defaultData(),    ...parsed.data };
-    if (parsed.enabled)   state.enabled   = { ...defaultEnabled(), ...parsed.enabled };
-    if (parsed.fontStyle) state.fontStyle = parsed.fontStyle;
-  } catch(e) {}
+  let saved = null;
+  try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+  if (!saved) return;
+  let parsed;
+  try { parsed = JSON.parse(saved); applySaved(parsed); }
+  catch (e) {
+    // Unreadable save: set it aside untouched instead of overwriting it.
+    try { localStorage.setItem(STORAGE_KEY + '_unreadable', saved); } catch (e2) {}
+    loadProblem = true;
+    return;
+  }
+  if (!parsed.appVersion) {
+    try { if (!localStorage.getItem(SAFETY_KEY)) localStorage.setItem(SAFETY_KEY, saved); } catch (e) {}
+    // Saves from before November 2026 kept dance, music, and theater in one list.
+    if (ui.perfLegacy === undefined) { ui.perfLegacy = sectionHasContent('performances'); ui.perfNote = ui.perfLegacy; saveUI(); }
+  }
 }
 
-let saveTimer;
+let saveTimer, pendingSave = false, saveFailed = false, unexported = false;
 function saveToStorage() {
+  pendingSave = true;
+  unexported = true;
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: state.data, enabled: state.enabled, fontStyle: state.fontStyle }));
-      flashSaved();
-    } catch(e) {}
-  }, 400);
+  saveTimer = setTimeout(writeNow, 400);
+}
+function writeNow() {
+  clearTimeout(saveTimer);
+  if (!pendingSave) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot()));
+    pendingSave = false;
+    if (saveFailed) { saveFailed = false; hideNotice(); }
+    setSaveBadge('Saved in this browser \u2713', false);
+  } catch (e) {
+    if (!saveFailed) {
+      saveFailed = true;
+      showNotice('This browser isn\u2019t saving your work. That happens in private windows or when storage is full. Download a backup file before you close this page.',
+        [{ label: 'Download a backup file', fn: downloadBackup }], { warn: true, sticky: true });
+    }
+    setSaveBadge('Not saved', true);
+  }
+}
+function setSaveBadge(text, failed) {
+  const badge = $('save-badge');
+  badge.textContent = text;
+  badge.classList.toggle('failed', !!failed);
+}
+// Don't lose the last few keystrokes if the tab closes inside the 400ms delay.
+window.addEventListener('pagehide', writeNow);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') writeNow(); });
+// If the same CV is edited in another tab, follow it instead of overwriting it later.
+window.addEventListener('storage', e => {
+  if (e.key !== STORAGE_KEY || pendingSave) return;
+  try {
+    if (e.newValue) applySaved(JSON.parse(e.newValue));
+    else { state.data = defaultData(); state.enabled = defaultEnabled(); state.order = DEFAULT_ORDER.slice(); }
+    renderAll();
+  } catch (err) {}
+});
+
+function hasAnyContent() {
+  return ['contact', 'artist_statement', ...DEFAULT_ORDER].some(sectionHasContent);
 }
 
-function flashSaved() {
-  const badge = document.getElementById('save-badge');
-  if (!badge) return;
-  badge.classList.add('saved');
-  badge.textContent = '\u2713 Saved';
-  setTimeout(() => badge.classList.remove('saved'), 1800);
+// The browser decides the wording of its own "leave this page?" prompt and
+// does not let a page change it. The notice behind the prompt carries our message.
+window.addEventListener('beforeunload', e => {
+  writeNow();
+  const ask = saveFailed || (WARN_ON_LEAVE === 'unexported' && unexported && hasAnyContent());
+  if (!ask) return;
+  if (!saveFailed) showLeaveReminder();
+  e.preventDefault();
+  e.returnValue = '';
+});
+function showLeaveReminder() {
+  showNotice('Your CV is saved in this browser, on this device only. Before you go, we recommend keeping a copy of your own: save a PDF, copy the text, or download a backup file.', [
+    { label: 'Save as PDF', fn: openPrintDialog },
+    { label: 'Copy text', fn: copyText },
+    { label: 'Download a backup file', fn: downloadBackup },
+  ]);
+}
+
+// ── Notice bar ────────────────────────────────────────────────────
+function showNotice(text, actions = [], opts = {}) {
+  const box = $('notice');
+  box.textContent = '';
+  box.className = 'notice' + (opts.warn ? ' warn' : '');
+  box.setAttribute('role', opts.warn ? 'alert' : 'status');
+  const p = document.createElement('p');
+  p.textContent = text;
+  box.appendChild(p);
+  const row = document.createElement('div');
+  row.className = 'notice-actions';
+  for (const a of actions) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn btn-secondary btn-small'; b.textContent = a.label;
+    b.addEventListener('click', () => { if (!opts.sticky) hideNotice(); a.fn(); });
+    row.appendChild(b);
+  }
+  const x = document.createElement('button');
+  x.type = 'button'; x.className = 'btn btn-quiet btn-small'; x.textContent = 'Dismiss';
+  x.addEventListener('click', hideNotice);
+  row.appendChild(x);
+  box.appendChild(row);
+  box.hidden = false;
+}
+function hideNotice() { $('notice').hidden = true; }
+
+// ── Section helpers ───────────────────────────────────────────────
+function sectionEntries(sec) {
+  return (state.data[sec] || []).map(ENTRY_MAP[sec])
+    .filter(e => [e.main, e.sub, e.collab, e.desc, e.extra, e.role, e.curator].some(txt));
+}
+function customSections() {
+  return (state.data.additional_info || []).filter(e => txt(e.header) || txt(e.content) || txt(e.dated));
+}
+function sectionHasContent(sec) {
+  if (sec === 'contact')          return CONTACT_FIELDS.some(f => txt(state.data[f.key]));
+  if (sec === 'artist_statement') return !!txt(state.data.artist_statement_text);
+  if (sec === 'additional_info')  return customSections().length > 0;
+  return sectionEntries(sec).length > 0;
+}
+function sectionInCV(sec) {
+  return sectionHasContent(sec) && (SECTION_META[sec].alwaysOn || !!state.enabled[sec]);
+}
+
+function monthAbbr(m) {
+  const i = parseInt(m, 10);
+  return i >= 1 && i <= 12 ? MONTH_ABBR[i - 1] : '';
+}
+// Years only: "2018–2021", as before. With a month on either end the range
+// gets a spaced dash and breaks into two short lines in the date column.
+function eduDate(e) {
+  const ys = txt(e.year_started), ye = txt(e.year_ended);
+  const ms = ys ? monthAbbr(e.month_started) : '';
+  const me = /^\d/.test(ye) ? monthAbbr(e.month_ended) : '';
+  const s = [ms, ys].filter(Boolean).join(' ');
+  const n = [me, ye].filter(Boolean).join(' ');
+  if (!ms && !me) return { text: s && n ? `${s}\u2013${n}` : s ? `${s}\u2013` : n };
+  if (s && n) return { text: `${s} \u2013 ${n}`, parts: [`${s} \u2013`, n] };
+  return { text: s ? `${s} \u2013` : n };
 }
 
 // ── Nav ───────────────────────────────────────────────────────────
-function sectionHasContent(sec) {
-  if (sec === 'contact') {
-    return ['name','discipline','address','location','phone','email','website'].some(k => (state.data[k] || '').trim());
+function navStateHTML(sec) {
+  if (!SECTION_META[sec] || !sectionHasContent(sec)) return '';
+  if (!sectionInCV(sec)) return '<span class="nav-hidden">hidden</span>';
+  if (sec === 'contact' || sec === 'artist_statement') {
+    return `<span class="nav-count nav-check">${ICONS.check}</span><span class="sr-only">, in your CV</span>`;
   }
-  if (sec === 'artist_statement') {
-    return (state.data.artist_statement_text || '').trim().length > 0;
-  }
-  const entries = state.data[sec] || [];
-  return entries.some(entry =>
-    Object.entries(entry).some(([k, v]) => !/^year/.test(k) && (v || '').trim().length > 0)
-  );
+  const n = sec === 'additional_info' ? customSections().length : sectionEntries(sec).length;
+  return `<span class="sr-only">, </span><span class="nav-count">${n}</span><span class="sr-only"> ${n === 1 ? 'entry' : 'entries'} in your CV</span>`;
 }
-
-function dotClass(sec) {
-  const meta     = SECTION_META[sec];
-  const hasContent = meta.alwaysOn ? true : sectionHasContent(sec);
-  if (!hasContent) return 'nav-dot';
-  return state.enabled[sec] || meta.alwaysOn ? 'nav-dot on' : 'nav-dot off';
+function groupSections(groupKey) {
+  return Object.keys(SECTION_META).filter(sec => SECTION_META[sec].group === groupKey);
 }
-
 function buildNav() {
-  const nav = document.getElementById('section-nav');
-  const groups = {};
-  for (const [sec, meta] of Object.entries(SECTION_META)) {
-    if (!groups[meta.group]) groups[meta.group] = [];
-    groups[meta.group].push([sec, meta]);
-  }
-  let html = '';
-  for (const groupKey of Object.keys(NAV_GROUPS)) {
-    if (!groups[groupKey]) continue;
-    html += `<div class="nav-section-group">
-      <span class="nav-group-label">${esc(NAV_GROUPS[groupKey])}</span>`;
-    for (const [sec, meta] of groups[groupKey]) {
-      const isActive = sec === state.activeSection;
-      html += `<button
-        class="nav-btn${isActive ? ' active' : ''}"
-        type="button"
-        data-section="${sec}"
-        aria-current="${isActive ? 'true' : 'false'}"
-      >${esc(meta.label)}<span class="${dotClass(sec)}" aria-hidden="true"></span></button>`;
+  let list = '', options = '';
+  for (const [groupKey, g] of Object.entries(NAV_GROUPS)) {
+    const secs = groupSections(groupKey);
+    if (g.direct) { // a group of one: the header is the link
+      list += `<div class="nav-direct"><button class="nav-btn nav-head-btn" type="button" data-section="${secs[0]}"><span class="nav-icon">${ICONS[groupKey]}</span><span class="nav-head-name">${esc(g.label)}</span><span data-nav-state></span></button></div>`;
+      options += `<option value="${secs[0]}">${esc(g.label)}</option>`;
+      continue;
     }
-    html += '</div>';
+    const closed = Array.isArray(ui.closed) ? ui.closed.includes(groupKey) : (g.field && !secs.some(sectionHasContent));
+    const open = !closed || secs.includes(state.activeSection);
+    list += `<details class="nav-group" data-group="${groupKey}"${open ? ' open' : ''}>
+      <summary><span class="nav-icon">${ICONS[groupKey]}</span>
+        <span class="nav-group-text"><span class="nav-group-name">${esc(g.label)}</span>${g.sub ? `<span class="nav-group-sub">${esc(g.sub)}</span>` : ''}</span>
+        <span class="nav-group-count" data-group-count></span>${CHEVRON}</summary>
+      <ul class="nav-items">${secs.map(sec =>
+        `<li><button class="nav-btn" type="button" data-section="${sec}"><span>${esc(SECTION_META[sec].label)}</span><span data-nav-state></span></button></li>`).join('')}</ul>
+    </details>`;
+    options += `<optgroup label="${esc(g.label)}">${secs.map(sec => `<option value="${sec}">${esc(SECTION_META[sec].label)}</option>`).join('')}</optgroup>`;
   }
-  nav.innerHTML = html;
+  options += '<optgroup label="Finish"><option value="arrange">Arrange your CV</option></optgroup>';
+  $('section-nav').innerHTML = `<div class="nav-list">
+      <p class="nav-key">Open the fields you work in. A number shows how many entries are in your CV.</p>
+      ${list}
+    </div>
+    <div class="nav-pinned"><button class="nav-btn nav-head-btn" type="button" data-section="arrange"><span class="nav-icon">${ICONS.arrange}</span><span class="nav-head-name">Arrange your CV</span><span data-nav-state></span></button></div>
+    <div class="nav-compact">
+      <div class="field-wrap"><label class="field-label" for="nav-select">Section</label><select class="field-select" id="nav-select">${options}</select></div>
+      <a class="btn btn-secondary" href="#preview-panel">Go to preview</a>
+    </div>`;
+  updateNavIndicators();
 }
-
 function updateNavIndicators() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
     const sec = btn.dataset.section;
-    const dot = btn.querySelector('.nav-dot');
-    if (dot) dot.className = dotClass(sec);
-    btn.classList.toggle('active', sec === state.activeSection);
-    btn.setAttribute('aria-current', sec === state.activeSection ? 'true' : 'false');
+    btn.querySelector('[data-nav-state]').innerHTML = navStateHTML(sec);
+    const active = sec === state.activeSection;
+    btn.classList.toggle('active', active);
+    if (active) btn.setAttribute('aria-current', 'page'); else btn.removeAttribute('aria-current');
   });
+  document.querySelectorAll('.nav-group').forEach(group => {
+    const n = groupSections(group.dataset.group).filter(sectionInCV).length;
+    group.querySelector('[data-group-count]').textContent = n ? `${n} in CV` : '';
+  });
+  const sel = $('nav-select');
+  if (sel) sel.value = state.activeSection;
 }
-
-// ── Field helper ──────────────────────────────────────────────────
-function fieldWrap(label, id, attrs, w, help, helpId, rowClass, rows, value) {
-  const helpHTML     = help ? `<span class="field-help" id="${esc(helpId)}">${esc(help)}</span>` : '';
-  const ariaDesc     = help ? ` aria-describedby="${esc(helpId)}"` : '';
-  const wrapStyle    = w ? ` style="flex:0 0 ${w}"` : '';
-  const rowClassAttr = rowClass ? ` ${rowClass}` : '';
-  const inputHTML    = rows
-    ? `<textarea class="field-textarea" id="${esc(id)}" ${attrs}${ariaDesc} style="min-height:${rows * 1.6 + 1}rem">${value || ''}</textarea>`
-    : `<input class="field-input" id="${esc(id)}" ${attrs}${ariaDesc}>`;
-  return `<div class="field-wrap${rowClassAttr}"${wrapStyle}>
-    <label class="field-label" for="${esc(id)}">${esc(label)}</label>
-    ${inputHTML}
-    ${helpHTML}
-  </div>`;
-}
+// Remember which groups are folded shut.
+$('section-nav').addEventListener('toggle', e => {
+  const group = e.target.closest && e.target.closest('.nav-group');
+  if (!group) return;
+  ui.closed = [...document.querySelectorAll('.nav-group:not([open])')].map(g => g.dataset.group);
+  saveUI();
+}, true);
 
 // ── Form rendering ────────────────────────────────────────────────
-function sectionToggleHTML(section) {
-  const meta    = SECTION_META[section];
-  if (meta.alwaysOn) return '';
-  const isOn    = state.enabled[section];
-  const labelTxt = isOn ? 'Included in CV' : 'Not included in CV — toggle on to include';
-  return `<div class="section-toggle-row">
-    <input
-      type="checkbox"
-      class="toggle-cb"
-      id="toggle-${esc(section)}"
-      data-toggle-section="${esc(section)}"
-      ${isOn ? 'checked' : ''}
-      aria-label="Include ${esc(meta.label)} section in CV"
-    >
-    <label class="toggle-label-text${isOn ? '' : ' off'}" for="toggle-${esc(section)}">${esc(labelTxt)}</label>
-    <span class="toggle-hint" aria-hidden="true">Green dot = included</span>
+function fieldHTML(f, id, value, dataAttrs) {
+  const helpId = f.help ? `${id}-help` : '';
+  const desc   = helpId ? ` aria-describedby="${helpId}"` : '';
+  let control;
+  if (f.type === 'month') {
+    control = `<select class="field-select" id="${id}" ${dataAttrs}${desc}>${
+      MONTH_OPTIONS.map(([v, l]) => `<option value="${v}"${v === (value || '') ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
+  } else if (f.rows) {
+    control = `<textarea class="field-textarea" id="${id}" ${dataAttrs}${desc} rows="${f.rows}" placeholder="${esc(f.ph || '')}">${esc(value)}</textarea>`;
+  } else {
+    control = `<input class="field-input" id="${id}" ${dataAttrs}${desc} type="${f.type || 'text'}" value="${esc(value)}" placeholder="${esc(f.ph || '')}"${f.ac ? ` autocomplete="${f.ac}"` : ''}>`;
+  }
+  return `<div class="field-wrap"${f.w ? ` style="flex:0 1 ${f.w}"` : ''}>
+    <label class="field-label" for="${id}">${esc(f.label)}</label>
+    ${control}
+    ${f.help ? `<span class="field-help" id="${helpId}">${esc(f.help)}</span>` : ''}
   </div>`;
+}
+
+function sectionToggleHTML(section) {
+  const meta = SECTION_META[section];
+  if (meta.alwaysOn) return '';
+  const isOn = !!state.enabled[section];
+  return `<div class="toggle-row">
+    <input type="checkbox" class="toggle-cb" id="toggle-${section}" data-toggle-section="${section}" ${isOn ? 'checked' : ''} aria-describedby="toggle-note-${section}">
+    <label class="toggle-label" for="toggle-${section}">Show this section in my CV</label>
+    <span class="toggle-note" id="toggle-note-${section}">${toggleNote(isOn)}</span>
+  </div>`;
+}
+function toggleNote(isOn) {
+  return isOn ? 'A section only appears once you\u2019ve added something to it.'
+              : 'Hidden from your CV. What you\u2019ve entered here is kept.';
 }
 
 function contactFormHTML() {
-  const d   = state.data;
-  const serif = state.fontStyle === 'serif';
   return `
-    <h2 class="f-title">Contact &amp; Identity</h2>
-    <p class="f-tip">This information appears at the top of your CV.</p>
-
-    <div class="section-toggle-row" style="margin-bottom:1.25rem">
-      <span class="toggle-label-text" style="font-weight:600;color:#111" id="font-toggle-label">CV Output Font</span>
-      <div role="group" aria-labelledby="font-toggle-label" style="display:flex;gap:0.5rem;margin-left:auto">
-        <button
-          type="button"
-          id="font-sans-btn"
-          class="font-choice-btn${!serif ? ' active' : ''}"
-          data-font="sans"
-          aria-pressed="${!serif}"
-        >Sans-serif</button>
-        <button
-          type="button"
-          id="font-serif-btn"
-          class="font-choice-btn${serif ? ' active' : ''}"
-          data-font="serif"
-          aria-pressed="${serif}"
-        >Serif</button>
-      </div>
-    </div>
-
-    <div class="field-row">
-      ${fieldWrap('Full Name', contactFieldId('name'), `data-field="name" value="${esc(d.name)}" placeholder="Remi Webb" autocomplete="name"`, null, null, '')}
-    </div>
-    <div class="field-row">
-      ${fieldWrap('Primary artistic role or practice (optional)', contactFieldId('discipline'), `data-field="discipline" value="${esc(d.discipline)}" placeholder="Painter, Documentary Filmmaker, Choreographer"`, null, 'Your primary medium or practice, e.g. Choreographer, Filmmaker, Interdisciplinary Artist.', 'help-discipline')}
-    </div>
-    <div class="field-row">
-      ${fieldWrap('Street Address (optional)', contactFieldId('address'), `data-field="address" value="${esc(d.address)}" placeholder="123 Main St" autocomplete="street-address"`, null, null, '')}
-    </div>
-    <div class="field-row">
-      ${fieldWrap('City and State or Country', contactFieldId('location'), `data-field="location" value="${esc(d.location)}" placeholder="Anytown, AS" autocomplete="address-level2"`, null, null, '')}
-    </div>
-    <div class="field-row">
-      ${fieldWrap('Phone (optional)', contactFieldId('phone'), `data-field="phone" value="${esc(d.phone)}" placeholder="646-555-1234" type="tel" autocomplete="tel"`, null, null, '')}
-    </div>
-    <div class="field-row">
-      ${fieldWrap('Email', contactFieldId('email'), `data-field="email" value="${esc(d.email)}" placeholder="heyremi@example.com" type="email" autocomplete="email"`, null, null, '')}
-    </div>
-    <div class="field-row">
-      ${fieldWrap('Website', contactFieldId('website'), `data-field="website" value="${esc(d.website)}" placeholder="remiwebb.com" autocomplete="url"`, null, 'Omit \u201chttps://\u201d \u2014 it will display more cleanly.', 'help-website')}
-    </div>`;
+    <h2 class="f-title" tabindex="-1">Contact info</h2>
+    <p class="f-tip">This appears at the top of your CV. Then work through the sections that fit your practice and skip the rest. Blank sections are left out.</p>
+    ${CONTACT_FIELDS.map(f => `<div class="field-row">${fieldHTML(f, contactFieldId(f.key), state.data[f.key] || '', `data-field="${f.key}"`)}</div>`).join('')}`;
 }
 
+function wordCount(s) { const t = txt(s); return t ? t.split(/\s+/).length : 0; }
+function statementCountText() {
+  const n = wordCount(state.data.artist_statement_text);
+  return `${n} of 50 words${n > 50 ? '. Consider trimming.' : ''}`;
+}
 function artistStatementFormHTML() {
-  const val = state.data.artist_statement_text || '';
   return `
-    <h2 class="f-title">Brief Artist Statement</h2>
+    <h2 class="f-title" tabindex="-1">Brief Artist Statement</h2>
     ${sectionToggleHTML('artist_statement')}
-    <p class="f-tip">Your statement will appear as a plain text block directly after your contact information, with no section header. Write in your own voice. This should be no longer than 50 words.</p>
+    <p class="f-tip">Your statement appears right after your contact information, with no section header. Write in your own voice, and keep it to 50 words or fewer.</p>
     <div class="field-wrap">
-      <label class="field-label" for="field-statement-text">Brief Artist Statement</label>
-      <textarea
-        class="field-textarea"
-        id="field-statement-text"
-        data-field="artist_statement_text"
-        placeholder="Describe your practice, process, or artistic concerns..."
-        aria-describedby="help-statement"
-        style="min-height:12rem"
-      >${esc(val)}</textarea>
-      <span class="field-help" id="help-statement">Line breaks will be preserved in the output.</span>
+      <label class="field-label" for="field-statement-text">Brief artist statement</label>
+      <textarea class="field-textarea" id="field-statement-text" data-field="artist_statement_text" rows="8"
+        placeholder="Describe your practice, process, or artistic concerns..." aria-describedby="help-statement">${esc(state.data.artist_statement_text || '')}</textarea>
+      <span class="field-help" id="help-statement"><span id="statement-count">${statementCountText()}</span>. Line breaks carry through to your CV.</span>
     </div>`;
 }
 
+function moveRowHTML(section, i) {
+  // Only shown to artists whose saved CV had dance, music, and theater in one list.
+  if (!ui.perfLegacy || !PERFORMING.includes(section)) return '';
+  const id = `move-${section}-${i}`;
+  return `<div class="move-row">
+    <label for="${id}">Move this entry to</label>
+    <select class="field-select move-select" id="${id}" data-section="${section}" data-index="${i}">
+      <option value="">Keep it here</option>
+      ${PERFORMING.filter(s => s !== section).map(s => `<option value="${s}">${esc(NAV_GROUPS[SECTION_META[s].group].label)}: ${esc(SECTION_META[s].label)}</option>`).join('')}
+    </select>
+  </div>`;
+}
+function isSortable(section) {
+  return section === 'education' || FIELD_CONFIG[section].flat().some(f => f.key === 'year');
+}
 function listSectionHTML(section) {
   const items  = state.data[section] || [];
   const config = FIELD_CONFIG[section] || [];
   const meta   = SECTION_META[section];
 
   const entries = items.map((item, i) => {
-    const rows = config.map(row => {
-      const rowClass = (row.length === 1 && row[0].rowClass) ? row[0].rowClass : '';
-      return `<div class="field-row${rowClass ? ' ' + rowClass : ''}">
-        ${row.map(f => {
-          const fid    = entryFieldId(section, i, f.key);
-          const helpId = f.help ? `help-${section}-${i}-${f.key}` : '';
-          const val    = esc(item[f.key] || '');
-          const attrs  = f.rows
-            ? `data-section="${section}" data-index="${i}" data-field="${f.key}" placeholder="${esc(f.ph || '')}"`
-            : `data-section="${section}" data-index="${i}" data-field="${f.key}" value="${val}" placeholder="${esc(f.ph || '')}"`;
-          return fieldWrap(
-            f.label, fid, attrs,
-            f.w || null, f.help || null, helpId, null, f.rows || null, f.rows ? val : null
-          );
-        }).join('')}
-      </div>`;
-    }).join('');
-
-    return `<div class="entry-card" id="entry-card-${section}-${i}">
+    const rows = config.map(row => `<div class="field-row">${row.map(f =>
+      fieldHTML(f, entryFieldId(section, i, f.key), item[f.key] || '', `data-section="${section}" data-index="${i}" data-field="${f.key}"`)
+    ).join('')}</div>`).join('');
+    return `<div class="entry-card" id="entry-card-${section}-${i}" role="group" aria-label="${esc(meta.label)} entry ${i + 1} of ${items.length}">
       <div class="entry-hdr">
         <span class="entry-num" aria-hidden="true">Entry ${i + 1}</span>
         <div class="entry-hdr-actions">
-          <button class="reorder-btn" type="button" data-section="${section}" data-index="${i}" data-dir="up"
-            aria-label="Move entry ${i + 1} up" ${i === 0 ? 'disabled' : ''}>↑</button>
-          <button class="reorder-btn" type="button" data-section="${section}" data-index="${i}" data-dir="down"
-            aria-label="Move entry ${i + 1} down" ${i === items.length - 1 ? 'disabled' : ''}>↓</button>
-          <button class="rm-btn" type="button" data-section="${section}" data-index="${i}"
-            aria-label="Remove entry ${i + 1} from ${esc(meta.label)}">Remove</button>
+          <button class="btn btn-secondary btn-small icon-btn reorder-btn" type="button" data-section="${section}" data-index="${i}" data-dir="up"
+            aria-label="Move entry ${i + 1} up" ${i === 0 ? 'disabled' : ''}>\u2191</button>
+          <button class="btn btn-secondary btn-small icon-btn reorder-btn" type="button" data-section="${section}" data-index="${i}" data-dir="down"
+            aria-label="Move entry ${i + 1} down" ${i === items.length - 1 ? 'disabled' : ''}>\u2193</button>
+          <button class="btn btn-quiet btn-small rm-btn" type="button" data-section="${section}" data-index="${i}"
+            aria-label="Remove entry ${i + 1}">Remove</button>
         </div>
       </div>
       ${rows}
+      ${moveRowHTML(section, i)}
     </div>`;
   }).join('');
 
-  const tipText = meta.tip || 'List entries in reverse chronological order (most recent first).';
+  const tools = isSortable(section) && items.length > 1
+    ? `<div class="list-tools"><button class="btn btn-secondary btn-small sort-btn" type="button" data-section="${section}">Sort newest first</button></div>` : '';
 
   return `
-    <h2 class="f-title">${esc(meta.label)}</h2>
+    <h2 class="f-title" tabindex="-1">${esc(meta.label)}</h2>
     ${sectionToggleHTML(section)}
-    <p class="f-tip">${esc(tipText)}</p>
+    <p class="f-tip">${esc(meta.tip || 'List entries in reverse chronological order (most recent first).')}</p>
+    ${section === 'performances' && ui.perfNote ? `<div class="info-note"><p>Dance and music now have their own sections. If an entry here belongs in one of them, use \u201cMove this entry to\u201d at the bottom of that entry. Anything you leave here prints as it always has.</p><button class="btn btn-quiet btn-small" type="button" id="perf-note-dismiss">Got it</button></div>` : ''}
+    ${tools}
     ${entries}
-    <button class="add-btn" type="button" data-section="${section}"
-      aria-label="Add entry to ${esc(meta.label)}">+ Add Entry</button>`;
+    <button class="btn btn-primary add-btn" type="button" data-section="${section}">+ Add another entry</button>`;
+}
+
+function arrangeFormHTML() {
+  const visible = state.order.filter(sectionInCV);
+  const list = visible.length
+    ? `<ol class="order-list">${visible.map((sec, i) => {
+        const label = SECTION_META[sec].arrangeLabel || SECTION_META[sec].label;
+        return `<li class="order-item"><span class="order-name">${esc(label)}</span>
+          <span class="entry-hdr-actions">
+            <button class="btn btn-secondary btn-small icon-btn move-btn" type="button" data-move="${sec}" data-dir="up" aria-label="Move ${esc(label)} up" ${i === 0 ? 'disabled' : ''}>\u2191</button>
+            <button class="btn btn-secondary btn-small icon-btn move-btn" type="button" data-move="${sec}" data-dir="down" aria-label="Move ${esc(label)} down" ${i === visible.length - 1 ? 'disabled' : ''}>\u2193</button>
+          </span></li>`;
+      }).join('')}</ol>
+      <button class="btn btn-quiet btn-small" type="button" id="reset-order">Reset to the standard order</button>`
+    : '<p class="f-tip">Nothing to arrange yet. Sections show up here once you\u2019ve added something to them.</p>';
+  const serif = state.fontStyle === 'serif';
+  return `
+    <h2 class="f-title" tabindex="-1">Arrange your CV</h2>
+    <p class="f-tip">Put your sections in the order that fits your practice. A writer who has also made films might move Published Works above Completed Films. Your contact info and artist statement always stay at the top.</p>
+    <h3 class="f-sub">Section order</h3>
+    ${list}
+    <h3 class="f-sub" id="font-legend">Typeface</h3>
+    <fieldset class="radio-set" aria-labelledby="font-legend">
+      <div class="radio-row"><input type="radio" name="cv-font" id="font-sans" value="sans" ${serif ? '' : 'checked'}><label for="font-sans">Sans-serif (Figtree)</label></div>
+      <div class="radio-row"><input type="radio" name="cv-font" id="font-serif" value="serif" ${serif ? 'checked' : ''}><label for="font-serif" class="in-lora">Serif (Lora)</label></div>
+    </fieldset>`;
+}
+
+function renderForm(section, focus) {
+  const container = $('form-content');
+  if (section === 'contact')               container.innerHTML = contactFormHTML();
+  else if (section === 'artist_statement') container.innerHTML = artistStatementFormHTML();
+  else if (section === 'arrange')          container.innerHTML = arrangeFormHTML();
+  else                                     container.innerHTML = listSectionHTML(section);
+  if (!focus) return;
+  const el = focus === 'heading' ? container.querySelector('.f-title')
+           : (focus[0] === '[' || focus[0] === '#') ? container.querySelector(focus)
+           : $(focus);
+  if (el) el.focus();
 }
 
 // ── CV preview ────────────────────────────────────────────────────
+let headingBase = 2; // 2 on screen (under the page's own h1); 1 while printing, so the PDF is tagged h1/h2
 function cvRow(e) {
-  // title line: the work, then whatever modifies it, inline
   const head = [];
-  if (e.main)    head.push(`<span class="cv-main">${parseMarkdown(e.main)}</span>`);
-  if (e.curator) head.push(`<span class="cv-sub">curated by ${parseMarkdown(e.curator)}</span>`);
-  if (e.collab)  head.push(`<span class="cv-sub">${esc(e.collabLabel || 'co-creator')}: ${parseMarkdown(e.collab)}</span>`);
-
-  // detail line: the artist's own role, then where and how long
-  const detail = [];
-  if (e.role) detail.push(parseMarkdown(e.role));
-  if (e.sub)  detail.push(parseMarkdown(e.sub));
+  if (txt(e.main))    head.push(`<span class="cv-main">${parseMarkdown(e.main)}</span>`);
+  if (txt(e.curator)) head.push(`<span class="cv-sub">curated by ${parseMarkdown(e.curator)}</span>`);
+  if (txt(e.collab))  head.push(`<span class="cv-sub">${esc(e.collabLabel || 'co-creator')}: ${parseMarkdown(e.collab)}</span>`);
+  const detail = [e.role, e.sub].filter(txt).map(parseMarkdown);
 
   const lines = [];
   if (head.length)   lines.push(head.join('<span class="cv-sub">, </span>'));
   if (detail.length) lines.push(`<span class="cv-sub">${detail.join('&nbsp;&middot; ')}</span>`);
-  if (e.desc)        lines.push(`<span class="cv-sub">${parseMarkdown(e.desc)}</span>`);
-  if (e.extra && e.extra.trim()) {
-    lines.push(e.extra.trim().split('\n').map(l => `<span class="cv-sub">${parseMarkdown(l)}</span>`).join('<br>'));
-  }
+  if (txt(e.desc))   lines.push(`<span class="cv-sub">${parseMarkdown(e.desc)}</span>`);
+  if (txt(e.extra))  lines.push(e.extra.trim().split('\n').map(l => `<span class="cv-sub">${parseMarkdown(l)}</span>`).join('<br>'));
 
-  return `<div class="cv-entry">
-    <div class="cv-yr">${esc(e.year || '')}</div>
-    <div>${lines.join('<br>')}</div>
-  </div>`;
+  const y = txt(e.year);
+  const year = e.yearParts ? e.yearParts.map(p => `<span class="cv-yr-line">${esc(p)}</span>`).join(' ')
+             : y && y.length <= 11 ? `<span class="cv-yr-short">${esc(y)}</span>` : esc(y);
+  return `<div class="cv-entry"><div class="cv-yr">${year}</div><div>${lines.join('<br>')}</div></div>`;
 }
 
-function cvSectionHTML(section, title, items, getEntry) {
+function cvSectionHTML(section) {
+  const H = `h${headingBase + 1}`;
   if (!state.enabled[section]) return '';
-  const entries = (items || []).map(getEntry)
-    .filter(e => e.main || e.sub || e.collab || e.desc || e.extra || e.role || e.curator);
+  if (section === 'additional_info') {
+    return customSections().map(e => {
+      const lines = txt(e.content).split('\n').map(parseMarkdown).join('<br>');
+      const dated = txt(e.dated);
+      const datedHTML = dated ? `<div class="cv-entries">${dated.split('\n').filter(l => l.trim()).map(l => {
+        const i = l.indexOf('|');
+        const yr = i >= 0 ? l.slice(0, i).trim() : '';
+        const tx = i >= 0 ? l.slice(i + 1).trim() : l.trim();
+        return `<div class="cv-entry"><div class="cv-yr">${esc(yr)}</div><div><span class="cv-block">${parseMarkdown(tx)}</span></div></div>`;
+      }).join('')}</div>` : '';
+      return `<section class="cv-section">
+        ${txt(e.header) ? `<${H} class="cv-sec-title">${esc(e.header)}</${H}>` : ''}
+        ${txt(e.content) ? `<p class="cv-block">${lines}</p>` : ''}
+        ${datedHTML}
+      </section>`;
+    }).join('');
+  }
+  const entries = sectionEntries(section);
   if (!entries.length) return '';
-  const rows = entries.map(cvRow).join('');
   return `<section class="cv-section">
-    <h3 class="cv-sec-title">${esc(title)}</h3>
-    <div class="cv-entries">${rows}</div>
+    <${H} class="cv-sec-title">${esc(SECTION_META[section].label)}</${H}>
+    <div class="cv-entries">${entries.map(cvRow).join('')}</div>
   </section>`;
 }
 
-function eduYear(e) {
-  const s = e.year_started, n = e.year_ended;
-  if (s && n) return `${s}\u2013${n}`;
-  if (s)      return `${s}\u2013`;
-  if (n)      return n;
-  return '';
-}
-
-function applyFontStyle() {
-  const doc = document.getElementById('cv-preview');
-  if (!doc) return;
-  doc.classList.toggle('cv-serif', state.fontStyle === 'serif');
-}
-
-function cvArtistStatementHTML(text) {
-  if (!state.enabled['artist_statement'] || !text || !text.trim()) return '';
-  const lines = text.trim().split('\n').map(l => parseMarkdown(l)).join('<br>');
-  return `<p class="cv-statement">${lines}</p>`;
+function metaPartHTML(key, value) {
+  const v = txt(value);
+  if (key === 'email' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return `<a href="mailto:${esc(v)}">${esc(v)}</a>`;
+  if (key === 'website' && /^\S+\.\S+$/.test(v)) return `<a href="${esc(/^https?:\/\//i.test(v) ? v : 'https://' + v)}">${esc(v)}</a>`;
+  return esc(v);
 }
 
 function renderCV() {
   const d = state.data;
-  const d2 = state.data;
-  const metaLine1 = [d2.discipline].filter(Boolean);
-  const metaLine2 = [d2.address, d2.location].filter(Boolean);
-  const metaLine3 = [d2.phone, d2.email].filter(Boolean);
-  const metaLine4 = [d2.website].filter(Boolean);
-  const metaLines = [metaLine1, metaLine2, metaLine3, metaLine4]
+  const metaLines = [['discipline'], ['address', 'location'], ['phone', 'email'], ['website']]
+    .map(keys => keys.filter(k => txt(d[k])).map(k => metaPartHTML(k, d[k])))
     .filter(line => line.length)
-    .map(line => `<span class="cv-meta-line">${line.map(p => esc(p)).join('&nbsp;&nbsp;·&nbsp;&nbsp;')}</span>`);
-  const metaHTML = metaLines.length
-    ? `<div class="cv-meta">${metaLines.join('')}</div>`
-    : '';
+    .map(line => `<span class="cv-meta-line">${line.join('&nbsp;&nbsp;\u00b7&nbsp;&nbsp;')}</span>`);
 
-  const sectionsHTML = [
-    // General
-    cvSectionHTML('education', 'Education', d.education, e => ({
-      year: eduYear(e), main: [e.degree, e.institution].filter(Boolean).join(', '), sub: e.location, desc: e.description,
-    })),
-    // Performing Arts
-    cvSectionHTML('performances', 'Performances & Productions', d.performances, e => ({
-      year: e.year, main: e.title, role: e.role, sub: [e.venue, e.location, e.duration].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-    })),
-    cvSectionHTML('albums', 'Albums', d.albums, e => ({
-      year: e.year, main: e.title, role: e.role, sub: [e.format, e.duration, e.label].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-    })),
-    // Film
-    cvSectionHTML('screenings', 'Completed Films', d.screenings, e => ({
-      year: e.year, main: e.title, collabLabel: 'co-director',
-      role: e.role, sub: e.duration,
-      collab: e.cocreator, desc: e.description,
-      extra: e.screenings_list,
-    })),
-    // Literature
-    cvSectionHTML('published_works', 'Published Works', d.published_works, e => ({
-      year: e.year, main: e.title, sub: e.publisher, collab: e.cocreator, desc: e.description,
-    })),
-    cvSectionHTML('readings', 'Readings', d.readings, e => ({
-      year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), desc: e.description,
-    })),
-    // Music
-    // Visual Arts & Tech-Centered Art
-    cvSectionHTML('solo', 'Solo Exhibitions', d.solo, e => ({
-      year: e.year, main: e.title, curator: e.curator, sub: [e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-    })),
-    cvSectionHTML('group', 'Group Exhibitions', d.group, e => ({
-      year: e.year, main: e.title, curator: e.curator, sub: [e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-    })),
-    cvSectionHTML('public_projects', 'Public Projects', d.public_projects, e => ({
-      year: e.year, main: e.title, curator: e.curator, sub: [e.organization, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-    })),
-    // Other
-    cvSectionHTML('commissions', 'Commissions', d.commissions, e => ({
-      year: e.year, main: e.title, sub: [e.commissioner, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-    })),
-    cvSectionHTML('works_in_progress', 'Works in Progress', d.works_in_progress, e => ({
-      year: e.year, main: e.title, sub: e.description,
-    })),
-    cvSectionHTML('awards', 'Awards & Grants', d.awards, e => ({
-      year: e.year, main: e.name, sub: e.organization, desc: e.description,
-    })),
-    cvSectionHTML('residencies', 'Residencies', d.residencies, e => ({
-      year: e.year, main: e.name, sub: e.location, desc: e.description,
-    })),
-    cvSectionHTML('teaching', 'Teaching, Lectures & Other Experiences', d.teaching, e => ({
-      year: e.year, main: e.role, sub: [e.institution, e.location].filter(Boolean).join(', '), desc: e.description,
-    })),
-    cvSectionHTML('press', 'Press & Reviews', d.press, e => ({
-      year: e.year, main: e.title, sub: [e.publication, e.author ? `by ${e.author}` : ''].filter(Boolean).join(', '), desc: e.description,
-    })),
-    cvSectionHTML('selected_writing', 'Selected Writing', d.selected_writing, e => ({
-      year: e.year, main: e.title, sub: e.publication, desc: e.description,
-    })),
-    cvSectionHTML('other_experience', 'Other Artistic Experience', d.other_experience, e => ({
-      year: e.year, main: e.title, role: e.role, sub: [e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
-    })),
-    ...(state.enabled['additional_info'] ? (d.additional_info || []).filter(e => e.header || e.content || e.dated).map(e => {
-      const lines = (e.content || '').trim().split('\n').map(l => parseMarkdown(l)).join('<br>');
-      const dated = (e.dated || '').trim();
-      const datedHTML = dated
-        ? `<div class="cv-entries">${dated.split('\n').filter(l => l.trim()).map(l => {
-            const i  = l.indexOf('|');
-            const yr = i >= 0 ? l.slice(0, i).trim() : '';
-            const tx = i >= 0 ? l.slice(i + 1).trim() : l.trim();
-            return `<div class="cv-entry"><div class="cv-yr">${esc(yr)}</div><div><span class="cv-block">${parseMarkdown(tx)}</span></div></div>`;
-          }).join('')}</div>`
-        : '';
-      return `<section class="cv-section">
-        ${e.header ? `<h3 class="cv-sec-title">${esc(e.header)}</h3>` : ''}
-        ${e.content && e.content.trim() ? `<p class="cv-block">${lines}</p>` : ''}
-        ${datedHTML}
-      </section>`;
-    }) : []),
-  ].join('');
+  const statement = state.enabled.artist_statement && txt(d.artist_statement_text)
+    ? `<p class="cv-statement">${txt(d.artist_statement_text).split('\n').map(parseMarkdown).join('<br>')}</p>` : '';
 
-  const surname = (d.name || '').trim().split(/\s+/).pop() || '';
-  document.documentElement.style.setProperty(
-    '--cv-name-prefix', surname ? JSON.stringify(surname + ', ') : '""');
+  const surname = txt(d.name).split(/\s+/).pop() || '';
+  document.documentElement.style.setProperty('--cv-name-prefix', surname ? JSON.stringify(surname + ', ') : '""');
 
-  document.getElementById('cv-preview').innerHTML =
-    `<h1 class="cv-name${!d.name ? ' empty' : ''}">${esc(d.name || 'Your Name')}</h1>
-    ${metaHTML}
-    ${cvArtistStatementHTML(d.artist_statement_text)}
-    ${sectionsHTML}`;
-  applyFontStyle();
+  const H = `h${headingBase}`;
+  const doc = $('cv-preview');
+  doc.innerHTML =
+    `<${H} class="cv-name${txt(d.name) ? '' : ' empty'}">${esc(txt(d.name) || 'Your Name')}</${H}>
+    ${metaLines.length ? `<div class="cv-meta">${metaLines.join('')}</div>` : ''}
+    ${statement}
+    ${state.order.map(cvSectionHTML).join('')}`;
+  doc.classList.toggle('cv-serif', state.fontStyle === 'serif');
+  alignDates();
 }
 
-function renderForm(section, focusTarget) {
-  const container = document.getElementById('form-content');
-  if (section === 'contact') {
-    container.innerHTML = contactFormHTML();
-  } else if (section === 'artist_statement') {
-    container.innerHTML = artistStatementFormHTML();
-  } else {
-    container.innerHTML = listSectionHTML(section);
-  }
-  if (focusTarget === 'container') {
-    container.focus();
-  } else if (focusTarget) {
-    const el = document.getElementById(focusTarget);
-    if (el) el.focus();
-  }
+// One date column for the whole document, as wide as the widest date in it.
+function alignDates() {
+  const doc = $('cv-preview');
+  doc.style.setProperty('--cv-date-w', 'max-content');
+  let w = 0;
+  doc.querySelectorAll('.cv-yr').forEach(el => { if (el.textContent.trim()) w = Math.max(w, el.getBoundingClientRect().width); });
+  if (w) doc.style.setProperty('--cv-date-w', (Math.ceil(w) + 2) + 'px');
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignDates);
+
+function renderAll(focus) {
+  buildNav();
+  renderForm(state.activeSection, focus);
+  renderCV();
 }
 
-// ── Events ────────────────────────────────────────────────────────
-document.getElementById('form-content').addEventListener('input', e => {
-  if (!e.target.classList.contains('field-input') && !e.target.classList.contains('field-textarea')) return;
-  const { field, section, index } = e.target.dataset;
-  if (section !== undefined && index !== undefined) {
-    state.data[section][parseInt(index)][field] = e.target.value;
-  } else if (field) {
-    state.data[field] = e.target.value;
-  }
+// ── Form events ───────────────────────────────────────────────────
+const form = $('form-content');
+
+function onFieldEdit(e) {
+  const t = e.target;
+  if (t.matches('.move-select') || !t.matches('.field-input, .field-textarea, .field-select')) return;
+  const { field, section, index } = t.dataset;
+  if (section !== undefined && index !== undefined) state.data[section][parseInt(index, 10)][field] = t.value;
+  else if (field) state.data[field] = t.value;
+  else return;
+  if (field === 'artist_statement_text') { const c = $('statement-count'); if (c) c.textContent = statementCountText(); }
   renderCV();
   updateNavIndicators();
   saveToStorage();
-});
+}
+form.addEventListener('input', onFieldEdit);
 
-document.getElementById('form-content').addEventListener('change', e => {
-  if (!e.target.classList.contains('toggle-cb')) return;
-  const sec = e.target.dataset.toggleSection;
-  if (!sec) return;
-  state.enabled[sec] = e.target.checked;
-  const labelEl = e.target.nextElementSibling;
-  if (labelEl) {
-    labelEl.textContent = e.target.checked ? 'Included in CV' : 'Not included in CV \u2014 toggle on to include';
-    labelEl.className = 'toggle-label-text' + (e.target.checked ? '' : ' off');
-  }
-  updateNavIndicators();
-  renderCV();
-  saveToStorage();
-});
-
-document.getElementById('form-content').addEventListener('click', e => {
-  const fontBtn = e.target.closest('.font-choice-btn');
-  if (fontBtn) {
-    state.fontStyle = fontBtn.dataset.font;
-    applyFontStyle();
-    saveToStorage();
-    // Update button states without re-rendering the whole form
-    document.querySelectorAll('.font-choice-btn').forEach(btn => {
-      const active = btn.dataset.font === state.fontStyle;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
+form.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('.move-select')) {
+    const from = t.dataset.section, to = t.value, idx = parseInt(t.dataset.index, 10);
+    if (!PERFORMING.includes(to) || to === from) return;
+    const [entry] = state.data[from].splice(idx, 1);
+    if (!state.data[from].length) state.data[from].push(emptyEntry(from));
+    // Drop the blank starter entry in the destination if that is all it holds.
+    if (state.data[to].length === 1 && !entryHasContent(state.data[to][0])) state.data[to] = [];
+    state.data[to].push(entry);
+    renderForm(from, 'heading');
+    renderCV(); updateNavIndicators(); saveToStorage();
+    const msg = `Entry moved to ${SECTION_META[to].label}.`;
+    announce(msg);
+    showNotice(msg, [{ label: `Go to ${SECTION_META[to].label}`, fn: () => goToSection(to, 'heading') }]);
     return;
   }
+  if (t.matches('.field-select')) return onFieldEdit(e);
+  if (t.name === 'cv-font') {
+    state.fontStyle = t.value === 'serif' ? 'serif' : 'sans';
+    renderCV(); saveToStorage();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignDates);
+    return;
+  }
+  if (!t.classList.contains('toggle-cb')) return;
+  const sec = t.dataset.toggleSection;
+  state.enabled[sec] = t.checked;
+  const note = $(`toggle-note-${sec}`);
+  if (note) note.textContent = toggleNote(t.checked);
+  updateNavIndicators(); renderCV(); saveToStorage();
+});
+
+function entryHasContent(entry) { return Object.values(entry).some(txt); }
+function firstFieldId(sec, idx) { return entryFieldId(sec, idx, FIELD_CONFIG[sec][0][0].key); }
+
+// Larger is newer. Entries without a year sort to the bottom and keep their order.
+function entrySortKey(sec, e) {
+  const src = sec === 'education' ? (txt(e.year_ended) || txt(e.year_started)) : txt(e.year);
+  if (/present|ongoing|current/i.test(src)) return Infinity;
+  const years = src.match(/\d{4}/g);
+  if (!years) return -Infinity;
+  const month = sec === 'education' ? (parseInt(txt(e.year_ended) ? e.month_ended : e.month_started, 10) || 0) : 0;
+  return Math.max(...years.map(Number)) * 100 + month;
+}
+
+form.addEventListener('click', e => {
   const add = e.target.closest('.add-btn');
-  const rm  = e.target.closest('.rm-btn');
   if (add) {
     const sec = add.dataset.section;
-    if (!state.data[sec]) state.data[sec] = [];
     state.data[sec].push(emptyEntry(sec));
-    const newIdx = state.data[sec].length - 1;
-    const firstKey = (FIELD_CONFIG[sec][0][0]).key;
-    renderForm(sec, entryFieldId(sec, newIdx, firstKey));
+    const idx = state.data[sec].length - 1;
+    renderForm(sec, firstFieldId(sec, idx));
     renderCV(); updateNavIndicators(); saveToStorage();
+    announce(`Entry ${idx + 1} added.`);
+    return;
   }
+  const rm = e.target.closest('.rm-btn');
   if (rm) {
-    const sec = rm.dataset.section;
-    const idx = parseInt(rm.dataset.index);
-    const hadMultiple = state.data[sec].length > 1;
+    const sec = rm.dataset.section, idx = parseInt(rm.dataset.index, 10);
+    if (entryHasContent(state.data[sec][idx]) && !confirm('Remove this entry? This can\u2019t be undone.')) return;
     state.data[sec].splice(idx, 1);
     if (!state.data[sec].length) state.data[sec].push(emptyEntry(sec));
-    const focusIdx = hadMultiple ? Math.max(0, idx - 1) : 0;
-    const firstKey = (FIELD_CONFIG[sec][0][0]).key;
-    renderForm(sec, entryFieldId(sec, focusIdx, firstKey));
+    renderForm(sec, firstFieldId(sec, Math.max(0, idx - 1)));
     renderCV(); updateNavIndicators(); saveToStorage();
+    announce('Entry removed.');
+    return;
   }
   const reorder = e.target.closest('.reorder-btn');
-  if (reorder && !reorder.disabled) {
-    const sec = reorder.dataset.section;
-    const idx = parseInt(reorder.dataset.index);
-    const dir = reorder.dataset.dir;
-    const arr = state.data[sec];
-    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx >= 0 && swapIdx < arr.length) {
-      [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
-      const firstKey = (FIELD_CONFIG[sec][0][0]).key;
-      renderForm(sec, entryFieldId(sec, swapIdx, firstKey));
-      renderCV(); saveToStorage();
-    }
+  if (reorder) {
+    const sec = reorder.dataset.section, idx = parseInt(reorder.dataset.index, 10), dir = reorder.dataset.dir;
+    const arr = state.data[sec], swap = dir === 'up' ? idx - 1 : idx + 1;
+    if (swap < 0 || swap >= arr.length) return;
+    [arr[idx], arr[swap]] = [arr[swap], arr[idx]];
+    renderForm(sec);
+    const sel = d => `.reorder-btn[data-index="${swap}"][data-dir="${d}"]:not(:disabled)`;
+    (form.querySelector(sel(dir)) || form.querySelector(sel(dir === 'up' ? 'down' : 'up'))).focus();
+    renderCV(); saveToStorage();
+    announce(`Entry moved ${dir}. Now entry ${swap + 1} of ${arr.length}.`);
+    return;
+  }
+  const sort = e.target.closest('.sort-btn');
+  if (sort) {
+    const sec = sort.dataset.section;
+    state.data[sec] = state.data[sec]
+      .map((entry, i) => ({ entry, i, k: entrySortKey(sec, entry) }))
+      .sort((a, b) => (b.k === a.k ? a.i - b.i : b.k > a.k ? 1 : -1))
+      .map(x => x.entry);
+    renderForm(sec, '.sort-btn');
+    renderCV(); saveToStorage();
+    announce('Entries sorted, newest first.');
+    return;
+  }
+  const move = e.target.closest('.move-btn');
+  if (move) {
+    const sec = move.dataset.move, dir = move.dataset.dir;
+    const visible = state.order.filter(sectionInCV);
+    const i = visible.indexOf(sec), j = dir === 'up' ? i - 1 : i + 1;
+    if (j < 0 || j >= visible.length) return;
+    const rest = state.order.filter(s => s !== sec);
+    const k = rest.indexOf(visible[j]);
+    rest.splice(dir === 'up' ? k : k + 1, 0, sec);
+    state.order = rest;
+    renderForm('arrange');
+    const sel = d => `.move-btn[data-move="${sec}"][data-dir="${d}"]:not(:disabled)`;
+    (form.querySelector(sel(dir)) || form.querySelector(sel(dir === 'up' ? 'down' : 'up'))).focus();
+    renderCV(); saveToStorage();
+    announce(`${SECTION_META[sec].arrangeLabel || SECTION_META[sec].label} moved ${dir}. Now ${j + 1} of ${visible.length}.`);
+    return;
+  }
+  if (e.target.closest('#perf-note-dismiss')) {
+    ui.perfNote = false; saveUI();
+    renderForm('performances', 'heading');
+    return;
+  }
+  if (e.target.closest('#reset-order')) {
+    state.order = DEFAULT_ORDER.slice();
+    renderForm('arrange', 'heading');
+    renderCV(); saveToStorage();
+    announce('Sections are back in the standard order.');
   }
 });
 
-document.getElementById('section-nav').addEventListener('click', e => {
-  const btn = e.target.closest('.nav-btn');
-  if (!btn) return;
-  state.activeSection = btn.dataset.section;
+function goToSection(sec, focus) {
+  state.activeSection = sec;
+  const group = SECTION_META[sec] && document.querySelector(`.nav-group[data-group="${SECTION_META[sec].group}"]`);
+  if (group) group.open = true;
   updateNavIndicators();
-  renderForm(state.activeSection, 'container');
+  renderForm(sec, focus);
+}
+$('section-nav').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-btn');
+  if (btn) goToSection(btn.dataset.section, 'heading');
+});
+$('section-nav').addEventListener('change', e => {
+  if (e.target.id === 'nav-select') goToSection(e.target.value);
 });
 
-document.getElementById('clear-btn').addEventListener('click', () => {
-  if (!confirm('Clear all form data? This cannot be undone.')) return;
-  state.data    = defaultData();
-  state.enabled = defaultEnabled();
-  localStorage.removeItem(STORAGE_KEY);
-  buildNav();
-  renderForm(state.activeSection);
-  renderCV();
-  const badge = document.getElementById('save-badge');
-  badge.textContent = 'Cleared';
-  badge.classList.remove('saved');
+// ── Dialogs ───────────────────────────────────────────────────────
+document.querySelectorAll('dialog').forEach(dlg => {
+  dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('[data-close]')) dlg.close(); });
 });
+$('fmt-help-btn').addEventListener('click', () => $('fmt-dialog').showModal());
+$('data-btn').addEventListener('click', () => $('data-dialog').showModal());
 
-// ── Print modal ───────────────────────────────────────────────────
-const overlay    = document.getElementById('print-tip-overlay');
-const printGoBtn = document.getElementById('print-tip-go');
-const cancelBtn  = document.getElementById('print-tip-cancel');
-
-document.getElementById('print-btn').addEventListener('click', () => {
-  overlay.classList.add('visible');
-  printGoBtn.focus();
-});
-
-printGoBtn.addEventListener('click', () => {
-  overlay.classList.remove('visible');
+function openPrintDialog() { $('print-dialog').showModal(); }
+$('print-btn').addEventListener('click', openPrintDialog);
+$('print-go').addEventListener('click', () => {
+  $('print-dialog').close();
+  unexported = false;
   window.print();
 });
-
-cancelBtn.addEventListener('click', () => {
-  overlay.classList.remove('visible');
-  document.getElementById('print-btn').focus();
+// While printing: real h1/h2 headings and a useful default PDF file name.
+const pageTitle = document.title;
+window.addEventListener('beforeprint', () => {
+  headingBase = 1; renderCV();
+  if (txt(state.data.name)) document.title = `${txt(state.data.name)} CV`;
+});
+window.addEventListener('afterprint', () => {
+  headingBase = 2; renderCV();
+  document.title = pageTitle;
 });
 
-overlay.addEventListener('click', e => {
-  if (e.target === overlay) {
-    overlay.classList.remove('visible');
-    document.getElementById('print-btn').focus();
-  }
+// ── Backup, restore, clear ────────────────────────────────────────
+function downloadBackup() {
+  const payload = { app: 'jerome-artist-cv-builder', savedAt: new Date().toISOString(), ...snapshot() };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `artist-cv-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  unexported = false;
+  announce('Backup file downloaded.');
+}
+$('backup-btn').addEventListener('click', downloadBackup);
+
+function replaceState(next, message) {
+  const before = snapshot();
+  next();
+  pendingSave = true; writeNow();
+  unexported = false;
+  renderAll('heading');
+  showNotice(message, [{ label: 'Undo', fn: () => {
+    applySaved(before); pendingSave = true; writeNow(); renderAll('heading'); announce('Undone. Your CV is back.');
+  } }]);
+}
+
+$('restore-btn').addEventListener('click', () => $('restore-file').click());
+$('restore-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+      if (!parsed || typeof parsed.data !== 'object' || !parsed.data) throw new Error();
+    } catch (err) {
+      $('data-dialog').close();
+      showNotice('That file isn\u2019t a backup from this tool, so nothing was changed. Choose a file named like \u201cartist-cv-backup-2026-11-13.json.\u201d', [], { warn: true });
+      return;
+    }
+    if (hasAnyContent() && !confirm('Replace what\u2019s in the form now with this backup?')) return;
+    $('data-dialog').close();
+    replaceState(() => applySaved(parsed), 'Backup loaded.');
+  };
+  reader.readAsText(file);
 });
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && overlay.classList.contains('visible')) {
-    overlay.classList.remove('visible');
-    document.getElementById('print-btn').focus();
-  }
+$('clear-btn').addEventListener('click', () => {
+  if (!confirm('Clear everything in the form?')) return;
+  $('data-dialog').close();
+  state.activeSection = 'contact';
+  replaceState(() => {
+    state.data = defaultData(); state.enabled = defaultEnabled(); state.order = DEFAULT_ORDER.slice(); state.fontStyle = 'sans';
+  }, 'Form cleared.');
 });
 
-// ── Plain-text CV formatter ───────────────────────────────────────
+// ── Plain-text copy ───────────────────────────────────────────────
 function cvToPlainText() {
   const d = state.data;
   const lines = [];
-
-  // Header
-  if (d.name) lines.push(d.name.toUpperCase());
-  const meta = [d.discipline, d.location, d.email, d.website].filter(Boolean);
+  const pad = '           ';
+  if (txt(d.name)) lines.push(txt(d.name).toUpperCase());
+  const meta = [d.discipline, d.location, d.email, d.website].map(txt).filter(Boolean);
   if (meta.length) lines.push(meta.join('  |  '));
   lines.push('');
+  if (state.enabled.artist_statement && txt(d.artist_statement_text)) lines.push(txt(d.artist_statement_text), '');
 
-  function addSection(sec, title, items, getRow) {
-    if (!state.enabled[sec]) return;
-    const rows = (items || []).map(getRow).filter(r => r.main || r.sub);
-    if (!rows.length) return;
-    lines.push(title.toUpperCase());
-    lines.push('─'.repeat(40));
+  for (const sec of state.order) {
+    if (!state.enabled[sec]) continue;
+    if (sec === 'additional_info') {
+      customSections().forEach(e => {
+        if (txt(e.header))  lines.push(txt(e.header).toUpperCase(), '\u2500'.repeat(40));
+        if (txt(e.content)) lines.push(txt(e.content), '');
+        if (txt(e.dated)) {
+          txt(e.dated).split('\n').filter(l => l.trim()).forEach(l => {
+            const i = l.indexOf('|');
+            const yr = i >= 0 ? l.slice(0, i).trim() : '';
+            lines.push(`${yr.padStart(9)}  ${i >= 0 ? l.slice(i + 1).trim() : l.trim()}`);
+          });
+          lines.push('');
+        }
+      });
+      continue;
+    }
+    const rows = sectionEntries(sec);
+    if (!rows.length) continue;
+    lines.push(SECTION_META[sec].label.toUpperCase(), '\u2500'.repeat(40));
     rows.forEach(r => {
-      const yr   = r.year ? r.year.padStart(9) : '         ';
-      const main = r.main || '';
-      const sub  = r.sub  ? `\n           ${r.sub}` : '';
-      const col  = r.collab ? `\n           Co-creator: ${r.collab}` : '';
-      const desc = r.desc ? `\n           ${r.desc}` : '';
-      lines.push(`${yr}  ${main}${sub}${col}${desc}`);
+      const head = [txt(r.main), txt(r.curator) && `curated by ${txt(r.curator)}`, txt(r.collab) && `${r.collabLabel || 'co-creator'}: ${txt(r.collab)}`].filter(Boolean).join(', ');
+      const body = [head, [r.role, r.sub].map(txt).filter(Boolean).join(' \u00b7 '), txt(r.desc), ...txt(r.extra).split('\n').map(txt)].filter(Boolean);
+      lines.push(`${txt(r.year).padStart(9)}  ${body.join('\n' + pad)}`);
     });
     lines.push('');
   }
-
-  addSection('education', 'Education', d.education, e => ({
-    year: eduYear(e), main: [e.degree, e.institution].filter(Boolean).join(', '), sub: e.location, desc: e.description,
-  }));
-  addSection('performances', 'Performances & Productions', d.performances, e => ({
-    year: e.year, main: e.title, sub: [e.role, e.venue, e.location, e.duration].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-  }));
-  addSection('albums', 'Albums', d.albums, e => ({
-    year: e.year, main: e.title, sub: [e.role, e.format, e.duration, e.label].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-  }));
-  addSection('screenings', 'Completed Films', d.screenings, e => ({
-    year: e.year, main: e.title, sub: [e.role, e.duration].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-  }));
-  addSection('published_works', 'Published Works', d.published_works, e => ({
-    year: e.year, main: e.title, sub: e.publisher, collab: e.cocreator, desc: e.description,
-  }));
-  addSection('readings', 'Readings', d.readings, e => ({
-    year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), desc: e.description,
-  }));
-  addSection('solo', 'Solo Exhibitions', d.solo, e => ({
-    year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-  }));
-  addSection('group', 'Group Exhibitions', d.group, e => ({
-    year: e.year, main: e.title, sub: [e.venue, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-  }));
-  addSection('public_projects', 'Public Projects', d.public_projects, e => ({
-    year: e.year, main: e.title, sub: [e.organization, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-  }));
-  addSection('commissions', 'Commissions', d.commissions, e => ({
-    year: e.year, main: e.title, sub: [e.commissioner, e.location].filter(Boolean).join(', '), collab: e.cocreator, desc: e.description,
-  }));
-
-  addSection('works_in_progress', 'Works in Progress', d.works_in_progress, e => ({
-    year: e.year, main: e.title, sub: e.description,
-  }));
-  addSection('awards', 'Awards & Grants', d.awards, e => ({
-    year: e.year, main: e.name, sub: e.organization, desc: e.description,
-  }));
-  addSection('residencies', 'Residencies', d.residencies, e => ({
-    year: e.year, main: e.name, sub: e.location, desc: e.description,
-  }));
-  addSection('teaching', 'Teaching, Lectures & Other Experiences', d.teaching, e => ({
-    year: e.year, main: e.role, sub: [e.institution, e.location].filter(Boolean).join(', '), desc: e.description,
-  }));
-  addSection('press', 'Press & Reviews', d.press, e => ({
-    year: e.year, main: e.title, sub: [e.publication, e.author ? `by ${e.author}` : ''].filter(Boolean).join(', '), desc: e.description,
-  }));
-  addSection('selected_writing', 'Selected Writing', d.selected_writing, e => ({
-    year: e.year, main: e.title, sub: e.publication, desc: e.description,
-  }));
-  addSection('other_experience', 'Other Artistic Experience', d.other_experience, e => ({
-    year: e.year, main: e.title, sub: [e.role, e.organization, e.location].filter(Boolean).join(', '), desc: e.description,
-  }));
-
-  if (state.enabled['additional_info']) {
-    (d.additional_info || []).filter(e => e.header || e.content || e.dated).forEach(e => {
-      if (e.header && e.header.trim()) {
-        lines.push(e.header.trim().toUpperCase());
-        lines.push('─'.repeat(40));
-      }
-      if (e.content && e.content.trim()) {
-        lines.push(e.content.trim());
-        lines.push('');
-      }
-      if (e.dated && e.dated.trim()) {
-        e.dated.trim().split('\n').filter(l => l.trim()).forEach(l => {
-          const i  = l.indexOf('|');
-          const yr = i >= 0 ? l.slice(0, i).trim() : '';
-          const tx = i >= 0 ? l.slice(i + 1).trim() : l.trim();
-          lines.push(`${yr.padStart(9)} ${tx}`);
-        });
-        lines.push('');
-      }
-    });
-  }
-
   return lines.join('\n');
 }
 
-document.getElementById('copy-btn').addEventListener('click', async () => {
-  const btn  = document.getElementById('copy-btn');
+async function copyText() {
+  const btn = $('copy-btn');
   const text = cvToPlainText();
   try {
     await navigator.clipboard.writeText(text);
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Copy Text';
-      btn.classList.remove('copied');
-    }, 2000);
-  } catch(e) {
-    // Fallback for browsers that block clipboard API
+  } catch (e) {
     const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity  = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Copy Text';
-      btn.classList.remove('copied');
-    }, 2000);
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
   }
-});
-// ── Markdown parser ───────────────────────────────────────────────
-function parseMarkdown(str) {
-  if (!str) return '';
-  return esc(str)
-    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  unexported = false;
+  btn.textContent = 'Copied \u2713';
+  announce('CV text copied to the clipboard.');
+  setTimeout(() => { btn.textContent = 'Copy text'; }, 2000);
 }
+$('copy-btn').addEventListener('click', copyText);
 
-// ── Formatting modal ──────────────────────────────────────────────
-const fmtOverlay = document.getElementById('fmt-overlay');
-document.getElementById('fmt-help-btn').addEventListener('click', () => {
-  fmtOverlay.classList.add('visible');
-  document.getElementById('fmt-close').focus();
-});
-document.getElementById('fmt-close').addEventListener('click', () => {
-  fmtOverlay.classList.remove('visible');
-  document.getElementById('fmt-help-btn').focus();
-});
-fmtOverlay.addEventListener('click', e => {
-  if (e.target === fmtOverlay) {
-    fmtOverlay.classList.remove('visible');
-    document.getElementById('fmt-help-btn').focus();
-  }
-});
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && fmtOverlay.classList.contains('visible')) {
-    fmtOverlay.classList.remove('visible');
-    document.getElementById('fmt-help-btn').focus();
-  }
-});
-
+// ── Start ─────────────────────────────────────────────────────────
 loadFromStorage();
-buildNav();
-renderForm('contact');
-renderCV();
+renderAll();
+if (loadProblem) {
+  showNotice('We couldn\u2019t read the CV saved in this browser, so the form is blank. Your saved copy has been set aside and not erased.', [], { warn: true });
+}
 </script>
 </body>
 </html>

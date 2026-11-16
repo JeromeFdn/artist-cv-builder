@@ -33,7 +33,10 @@ the visitor's IP address to Google, as any embedded web font
 would. And because saved progress lives in one browser on one
 device, it does not follow the artist to another computer or
 another browser. Clearing browser data, or working in a private
-or incognito window, will discard saved progress.
+or incognito window, will discard saved progress. Some browsers,
+including Safari, also erase saved work when a site goes
+unvisited for a while. A downloaded backup file is the only
+protection against that.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HOW TO USE
 
@@ -50,8 +53,9 @@ HOW TO USE
    Field groups start folded; artists open the ones they work
    in. Dance, Music, and Theater each print as a separate
    section. Artists whose saved CV predates that split see a
-   "Move this entry to" menu so they can sort old entries into
-   Dance or Music; nobody else sees it. A number shows how many entries are in the CV; "hidden"
+   "Move this entry to" menu and a Move button so they can sort
+   old entries into Dance or Music; nobody else sees them. The
+   entry moves only when Move is pressed. A number shows how many entries are in the CV; "hidden"
    means the section has content but is switched off. Blank
    sections never print.
 
@@ -69,8 +73,12 @@ HOW TO USE
    application form or email.
 
 7. "Back up or reset" downloads a backup file, loads one, or
-   clears the form. Loading and clearing can be undone until
-   the notice is dismissed.
+   clears the form. Before loading or clearing, the browser
+   sets aside the CV that was in the form. "Undo" in the notice,
+   or "Bring back my earlier CV" in the same dialog, restores
+   it, even after the page is reloaded. Bringing it back sets
+   aside whatever is in the form at that moment, so the two can
+   be switched. Only one earlier CV is kept.
 
 8. If someone closes the page with edits they have not yet
    saved to PDF, copied, or backed up, the browser asks them
@@ -95,6 +103,10 @@ change. What is built in:
     column and scrolls normally
   - Everything works from the keyboard; reordering uses
     buttons, never dragging
+  - The preview panel can take keyboard focus, so arrow keys
+    scroll it
+  - Long unbroken text, such as a URL in a title, wraps inside
+    the page instead of running off it
   - Dialogs trap focus and return it when closed
   - Adding, moving, sorting, and removing are announced to
     screen readers; the preview itself is not read out on
@@ -144,6 +156,10 @@ TECHNICAL NOTES
     adds to that data (education months, section order). The
     first time it runs it leaves a one-time copy of the
     existing save under "jerome_artist_cv_v3_before_2026_11".
+  - "jerome_artist_cv_v3_before_replace" holds the one CV set
+    aside by the last Clear or Load. It is written only at that
+    moment and read only when the artist asks for it back. A
+    blank form is never set aside.
   - Field keys in FIELD_CONFIG are the saved data keys. Labels
     can change freely; renaming a key hides what artists have
     saved under it.
@@ -162,4 +178,4 @@ TECHNICAL NOTES
     Chrome and Edge support it; other browsers may not.
   - Hosted via GitHub Pages (static file hosting).
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Last updated: November 13, 2026
+Last updated: November 15, 2026

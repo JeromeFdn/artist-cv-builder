@@ -237,13 +237,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
   margin-bottom: 0.5625rem; padding-bottom: 0.3125rem; border-bottom: 1px solid #000;
 }
 /* --cv-date-w is measured in alignDates() so every section shares one date column */
-.cv-entries { display: grid; grid-template-columns: var(--cv-date-w, max-content) 1fr; }
+.cv-entries { display: grid; grid-template-columns: var(--cv-date-w, max-content) minmax(0, 1fr); }
+.cv-entry > div:last-child { min-width: 0; }
+.cv-name, .cv-meta-line, .cv-statement, .cv-block, .cv-sec-title, .cv-entry { overflow-wrap: anywhere; }
 .cv-entry { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; gap: 0 1.25rem; margin-bottom: 0.4375rem; font-size: 0.9375rem; line-height: 1.55; }
 .cv-entry:last-child { margin-bottom: 0; }
 .cv-yr { font-size: 0.875rem; font-weight: 500; padding-top: 0.0625rem; text-align: right; max-width: 6rem; overflow-wrap: break-word; }
 .cv-yr-line, .cv-yr-short { display: block; white-space: nowrap; }
 /* sections with no dates give the whole width to the text */
-.cv-entries:not(:has(.cv-yr:not(:empty))) { grid-template-columns: 0 1fr; }
+.cv-entries:not(:has(.cv-yr:not(:empty))) { grid-template-columns: 0 minmax(0, 1fr); }
 .cv-entries:not(:has(.cv-yr:not(:empty))) .cv-entry { column-gap: 0; }
 .cv-main { font-weight: 500; }
 .cv-sub { font-size: 0.875rem; }
@@ -330,14 +332,14 @@ dialog li { margin-bottom: 0.375rem; }
   <div class="main">
     <nav id="section-nav" class="section-nav" aria-label="CV sections"></nav>
     <main id="form-content" class="form-content" tabindex="-1"></main>
-    <section class="preview-panel" id="preview-panel" aria-label="CV preview" tabindex="-1">
+    <section class="preview-panel" id="preview-panel" aria-label="CV preview" tabindex="0">
       <p class="preview-label" aria-hidden="true">Preview</p>
       <div id="cv-preview" class="cv-doc"></div>
     </section>
   </div>
 
   <footer class="site-footer">
-    Created by <a href="https://www.jeromefdn.org" target="_blank" rel="noopener noreferrer">Jerome Foundation<span class="sr-only"> (opens in a new tab)</span></a>. Last updated November 13, 2026. Everything you enter stays on your device. It is saved only in this browser and is never sent to Jerome Foundation or anyone else.
+    Created by <a href="https://www.jeromefdn.org" target="_blank" rel="noopener noreferrer">Jerome Foundation<span class="sr-only"> (opens in a new tab)</span></a>. Last updated November 15, 2026. Everything you enter stays on your device. It is saved only in this browser and is never sent to Jerome Foundation or anyone else.
   </footer>
 
   <div id="sr-status" class="sr-only" role="status" aria-live="polite"></div>
@@ -374,7 +376,7 @@ dialog li { margin-bottom: 0.375rem; }
 
   <dialog id="data-dialog" aria-labelledby="data-heading">
     <h2 id="data-heading">Your saved work</h2>
-    <p>Your CV saves automatically in this browser, on this device. It is not stored anywhere else, so it won’t follow you to another computer, and clearing your browsing data erases it.</p>
+    <p>Your CV saves automatically in this browser, on this device. It is not stored anywhere else, so it won’t follow you to another computer, and clearing your browsing data erases it. Some browsers, including Safari on iPhone, iPad, and Mac, also erase saved work if you don’t come back to this page for a while. A backup file protects you from that.</p>
     <h3>Keep a backup</h3>
     <p>Download a backup file and keep it somewhere safe. You can load it later, here or on another computer, and keep editing.</p>
     <button class="btn btn-primary" type="button" id="backup-btn">Download a backup file</button>
@@ -383,8 +385,13 @@ dialog li { margin-bottom: 0.375rem; }
     <button class="btn btn-secondary" type="button" id="restore-btn">Choose a backup file</button>
     <input type="file" id="restore-file" accept=".json,application/json" hidden aria-label="Backup file">
     <h3>Start over</h3>
-    <p>Erase everything in the form and begin with a blank CV.</p>
+    <p>Erase everything in the form and begin with a blank CV. This browser sets aside the CV you clear, so you can bring it back.</p>
     <button class="btn btn-danger" type="button" id="clear-btn">Clear the form</button>
+    <div id="bring-back" hidden>
+      <h3>Bring back your earlier CV</h3>
+      <p id="bring-back-text"></p>
+      <button class="btn btn-secondary" type="button" id="bring-back-btn">Bring back my earlier CV</button>
+    </div>
     <div class="dialog-actions"><button class="btn btn-secondary" type="button" data-close>Close</button></div>
   </dialog>
 
@@ -394,6 +401,9 @@ dialog li { margin-bottom: 0.375rem; }
 const STORAGE_KEY  = 'jerome_artist_cv_v3';
 // One-time copy of whatever was saved before the November 2026 update first ran.
 const SAFETY_KEY   = 'jerome_artist_cv_v3_before_2026_11';
+// The CV as it stood just before the artist last cleared the form or loaded a backup.
+// Lets them bring it back even after a reload. Never read on startup.
+const BEFORE_KEY   = 'jerome_artist_cv_v3_before_replace';
 const APP_VERSION  = '2026-11';
 // 'unexported': ask before leaving when there are edits since the last PDF, copy, or backup.
 // 'unsaved':    ask only when the browser could not save.
@@ -920,7 +930,7 @@ window.addEventListener('beforeunload', e => {
   e.returnValue = '';
 });
 function showLeaveReminder() {
-  showNotice('Your CV is saved in this browser, on this device only. Before you go, we recommend keeping a copy of your own: save a PDF, copy the text, or download a backup file.', [
+  showNotice('Your CV is saved in this browser, on this device only, and some browsers erase saved work after a while. Before you go, we recommend keeping a copy of your own: save a PDF, copy the text, or download a backup file.', [
     { label: 'Save as PDF', fn: openPrintDialog },
     { label: 'Copy text', fn: copyText },
     { label: 'Download a backup file', fn: downloadBackup },
@@ -1123,9 +1133,10 @@ function moveRowHTML(section, i) {
   return `<div class="move-row">
     <label for="${id}">Move this entry to</label>
     <select class="field-select move-select" id="${id}" data-section="${section}" data-index="${i}">
-      <option value="">Keep it here</option>
+      <option value="">Choose a section</option>
       ${PERFORMING.filter(s => s !== section).map(s => `<option value="${s}">${esc(NAV_GROUPS[SECTION_META[s].group].label)}: ${esc(SECTION_META[s].label)}</option>`).join('')}
     </select>
+    <button class="btn btn-secondary btn-small move-go" type="button" data-section="${section}" data-index="${i}" aria-label="Move entry ${i + 1} to the chosen section">Move</button>
   </div>`;
 }
 function isSortable(section) {
@@ -1164,7 +1175,7 @@ function listSectionHTML(section) {
     <h2 class="f-title" tabindex="-1">${esc(meta.label)}</h2>
     ${sectionToggleHTML(section)}
     <p class="f-tip">${esc(meta.tip || 'List entries in reverse chronological order (most recent first).')}</p>
-    ${section === 'performances' && ui.perfNote ? `<div class="info-note"><p>Dance and music now have their own sections. If an entry here belongs in one of them, use \u201cMove this entry to\u201d at the bottom of that entry. Anything you leave here prints as it always has.</p><button class="btn btn-quiet btn-small" type="button" id="perf-note-dismiss">Got it</button></div>` : ''}
+    ${section === 'performances' && ui.perfNote ? `<div class="info-note"><p>Dance and music now have their own sections. If an entry here belongs in one of them, choose it under \u201cMove this entry to\u201d at the bottom of that entry, then press Move. Anything you leave here prints as it always has.</p><button class="btn btn-quiet btn-small" type="button" id="perf-note-dismiss">Got it</button></div>` : ''}
     ${tools}
     ${entries}
     <button class="btn btn-primary add-btn" type="button" data-section="${section}">+ Add another entry</button>`;
@@ -1204,7 +1215,7 @@ function renderForm(section, focus) {
   else                                     container.innerHTML = listSectionHTML(section);
   if (!focus) return;
   const el = focus === 'heading' ? container.querySelector('.f-title')
-           : (focus[0] === '[' || focus[0] === '#') ? container.querySelector(focus)
+           : (focus[0] === '[' || focus[0] === '#' || focus[0] === '.') ? container.querySelector(focus)
            : $(focus);
   if (el) el.focus();
 }
@@ -1324,21 +1335,8 @@ form.addEventListener('input', onFieldEdit);
 
 form.addEventListener('change', e => {
   const t = e.target;
-  if (t.matches('.move-select')) {
-    const from = t.dataset.section, to = t.value, idx = parseInt(t.dataset.index, 10);
-    if (!PERFORMING.includes(to) || to === from) return;
-    const [entry] = state.data[from].splice(idx, 1);
-    if (!state.data[from].length) state.data[from].push(emptyEntry(from));
-    // Drop the blank starter entry in the destination if that is all it holds.
-    if (state.data[to].length === 1 && !entryHasContent(state.data[to][0])) state.data[to] = [];
-    state.data[to].push(entry);
-    renderForm(from, 'heading');
-    renderCV(); updateNavIndicators(); saveToStorage();
-    const msg = `Entry moved to ${SECTION_META[to].label}.`;
-    announce(msg);
-    showNotice(msg, [{ label: `Go to ${SECTION_META[to].label}`, fn: () => goToSection(to, 'heading') }]);
-    return;
-  }
+  // Choosing a section does nothing by itself; the Move button next to it does the move.
+  if (t.matches('.move-select')) return;
   if (t.matches('.field-select')) return onFieldEdit(e);
   if (t.name === 'cv-font') {
     state.fontStyle = t.value === 'serif' ? 'serif' : 'sans';
@@ -1387,6 +1385,27 @@ form.addEventListener('click', e => {
     renderForm(sec, firstFieldId(sec, Math.max(0, idx - 1)));
     renderCV(); updateNavIndicators(); saveToStorage();
     announce('Entry removed.');
+    return;
+  }
+  const go = e.target.closest('.move-go');
+  if (go) {
+    const from = go.dataset.section, idx = parseInt(go.dataset.index, 10);
+    const select = $(`move-${from}-${idx}`), to = select.value;
+    if (!PERFORMING.includes(to) || to === from) {
+      select.focus();
+      announce('Choose a section first, then press Move.');
+      return;
+    }
+    const [entry] = state.data[from].splice(idx, 1);
+    if (!state.data[from].length) state.data[from].push(emptyEntry(from));
+    // Drop the blank starter entry in the destination if that is all it holds.
+    if (state.data[to].length === 1 && !entryHasContent(state.data[to][0])) state.data[to] = [];
+    state.data[to].push(entry);
+    renderForm(from, 'heading');
+    renderCV(); updateNavIndicators(); saveToStorage();
+    const msg = `Entry moved to ${SECTION_META[to].label}.`;
+    announce(msg);
+    showNotice(msg, [{ label: `Go to ${SECTION_META[to].label}`, fn: () => goToSection(to, 'heading') }]);
     return;
   }
   const reorder = e.target.closest('.reorder-btn');
@@ -1464,7 +1483,7 @@ document.querySelectorAll('dialog').forEach(dlg => {
   dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('[data-close]')) dlg.close(); });
 });
 $('fmt-help-btn').addEventListener('click', () => $('fmt-dialog').showModal());
-$('data-btn').addEventListener('click', () => $('data-dialog').showModal());
+$('data-btn').addEventListener('click', () => { refreshBringBack(); $('data-dialog').showModal(); });
 
 function openPrintDialog() { $('print-dialog').showModal(); }
 $('print-btn').addEventListener('click', openPrintDialog);
@@ -1498,16 +1517,68 @@ function downloadBackup() {
 }
 $('backup-btn').addEventListener('click', downloadBackup);
 
+// The one earlier CV this browser keeps: what was in the form just before the
+// last Clear or Load. Stored apart from the CV itself and only ever written here.
+function parkCV(snap) {
+  try { localStorage.setItem(BEFORE_KEY, JSON.stringify({ setAside: new Date().toISOString(), cv: snap })); return true; }
+  catch (e) { return false; }
+}
+function readParked() {
+  try {
+    const p = JSON.parse(localStorage.getItem(BEFORE_KEY) || 'null');
+    return p && p.cv && typeof p.cv === 'object' && p.cv.data && typeof p.cv.data === 'object' ? p : null;
+  } catch (e) { return null; }
+}
+
 function replaceState(next, message) {
   const before = snapshot();
+  // A blank form is never set aside, so it cannot push out an earlier CV worth keeping.
+  if (hasAnyContent()) parkCV(before);
   next();
   pendingSave = true; writeNow();
   unexported = false;
   renderAll('heading');
-  showNotice(message, [{ label: 'Undo', fn: () => {
-    applySaved(before); pendingSave = true; writeNow(); renderAll('heading'); announce('Undone. Your CV is back.');
-  } }]);
+  showNotice(message, [{ label: 'Undo', fn: () => bringBack(before) }]);
 }
+
+// Puts an earlier CV back in the form. Whatever is in the form at that moment is
+// set aside in its place, so the two can be switched and nothing typed is thrown away.
+function bringBack(target) {
+  const parked = readParked();
+  const cv = target || (parked && parked.cv);
+  if (!cv) return;
+  const current = snapshot(), currentHasContent = hasAnyContent();
+  if (currentHasContent && !confirm('Bring back the CV you had before? What\u2019s in the form now will be set aside, and you can switch back from \u201cBack up or reset.\u201d')) return;
+  try { applySaved(cv); }
+  catch (e) {
+    showNotice('We couldn\u2019t read the earlier CV, so nothing was changed.', [], { warn: true });
+    return;
+  }
+  pendingSave = true; writeNow();
+  // Only touch the set-aside copy once the restored CV is safely saved.
+  if (!pendingSave) {
+    if (currentHasContent) parkCV(current);
+    else { try { localStorage.removeItem(BEFORE_KEY); } catch (e) {} }
+  }
+  unexported = false;
+  renderAll('heading');
+  const msg = currentHasContent
+    ? 'Your earlier CV is back. What you had a moment ago is set aside. To switch back, open \u201cBack up or reset.\u201d'
+    : 'Your earlier CV is back.';
+  showNotice(msg);
+  announce(msg);
+}
+
+function refreshBringBack() {
+  const parked = readParked();
+  $('bring-back').hidden = !parked;
+  if (!parked) return;
+  const d = new Date(parked.setAside);
+  const when = isNaN(d) ? '' : ` on ${d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })} at ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+  const name = txt(parked.cv.data.name);
+  $('bring-back-text').textContent = `This browser set aside the CV${name ? ` for ${name}` : ''} that was in the form${when}, before it was cleared or replaced. Bringing it back sets aside what is in the form now, so you can switch between the two.`;
+}
+$('bring-back-btn').addEventListener('click', () => { $('data-dialog').close(); bringBack(); });
 
 $('restore-btn').addEventListener('click', () => $('restore-file').click());
 $('restore-file').addEventListener('change', e => {
@@ -1533,7 +1604,7 @@ $('restore-file').addEventListener('change', e => {
 });
 
 $('clear-btn').addEventListener('click', () => {
-  if (!confirm('Clear everything in the form?')) return;
+  if (!confirm('Clear everything in the form? You can bring it back afterward from \u201cBack up or reset.\u201d')) return;
   $('data-dialog').close();
   state.activeSection = 'contact';
   replaceState(() => {
